@@ -1,8 +1,8 @@
 package botcli
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
 	"github.com/spf13/cobra"
