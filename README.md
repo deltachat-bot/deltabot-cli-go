@@ -52,8 +52,11 @@ func main() {
 Save the previous code snippet as `echobot.go` then run:
 
 ```sh
-go run ./echobot.go bot@example.com PASSWORD
+go run ./echobot.go init bot@example.com PASSWORD
+go run ./echobot.go serve
 ```
+
+Use `go run ./echobot.go --help` to see all the available options.
 
 Check the [examples folder](https://github.com/deltachat-bot/deltabot-cli-go/tree/master/examples) for
 more examples.
