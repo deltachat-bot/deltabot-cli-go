@@ -3,7 +3,7 @@ module github.com/deltachat-bot/deltabot-cli-go
 go 1.19
 
 require (
-	github.com/deltachat/deltachat-rpc-client-go v0.0.0-20230220221725-c147bb6620a1
+	github.com/deltachat/deltachat-rpc-client-go v0.0.0-20230222214516-eeee0f8b44ea
 	github.com/spf13/cobra v1.6.1
 	go.uber.org/zap v1.24.0
 )
@@ -16,5 +16,3 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 )
-
-replace github.com/deltachat/deltachat-rpc-client-go => /home/dc/deltachat/deltachat-rpc-client-go
