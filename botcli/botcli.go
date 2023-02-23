@@ -43,7 +43,7 @@ func (self *BotCli) Start() {
 	}
 
 	if self.parsedCmd != nil {
-		os.MkdirAll(self.AppDir, os.ModeDir)
+		os.MkdirAll(self.AppDir, os.ModePerm)
 		rpc := deltachat.NewRpc()
 		rpc.AccountsDir = getAccountsDir(self.AppDir)
 		defer rpc.Stop()
