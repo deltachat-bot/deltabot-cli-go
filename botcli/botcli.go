@@ -2,7 +2,6 @@ package botcli
 
 import (
 	"os"
-	"time"
 
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
 	"github.com/spf13/cobra"
@@ -27,7 +26,7 @@ type BotCli struct {
 
 // Create a new BotCli instance
 func New(appName string) *BotCli {
-	output := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}
+	output := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "2006-01-02T15:04:05Z"}
 	logger := zerolog.New(output).With().Timestamp().Logger()
 
 	cli := &BotCli{
