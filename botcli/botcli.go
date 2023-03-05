@@ -24,6 +24,19 @@ type BotCli struct {
 	onStartAction func(bot *deltachat.Bot, cmd *cobra.Command, args []string)
 }
 
+// Create a new BotCli instance
+func New(appName string) *BotCli {
+	logger, _ := zap.NewProduction()
+	cli := &BotCli{
+		AppName:    appName,
+		RootCmd:    &cobra.Command{Use: os.Args[0]},
+		Logger:     logger,
+		actionsMap: make(map[string]CommandAction),
+	}
+	initializeRootCmd(cli)
+	return cli
+}
+
 // Register function to be called when the bot is initialized.
 func (self *BotCli) OnBotInit(action func(bot *deltachat.Bot, cmd *cobra.Command, args []string)) {
 	self.onInitAction = action
@@ -44,11 +57,11 @@ func (self *BotCli) Start() {
 
 	if self.parsedCmd != nil {
 		os.MkdirAll(self.AppDir, os.ModePerm)
-		rpc := deltachat.NewRpc()
+		rpc := deltachat.NewRpcIO()
 		rpc.AccountsDir = getAccountsDir(self.AppDir)
 		defer rpc.Stop()
 		rpc.Start()
-		bot := deltachat.NewBotFromAccountManager(deltachat.NewAccountManager(rpc))
+		bot := deltachat.NewBotFromAccountManager(&deltachat.AccountManager{rpc})
 		if self.onInitAction != nil {
 			self.onInitAction(bot, self.parsedCmd.cmd, self.parsedCmd.args)
 		}
@@ -67,17 +80,4 @@ func (self *BotCli) AddCommand(cmd *cobra.Command, action CommandAction) {
 	}
 	self.RootCmd.AddCommand(cmd)
 	self.actionsMap[cmd.Use] = action
-}
-
-// Create a new BotCli instance
-func New(appName string) *BotCli {
-	logger, _ := zap.NewProduction()
-	cli := &BotCli{
-		AppName:    appName,
-		RootCmd:    &cobra.Command{Use: appName},
-		Logger:     logger,
-		actionsMap: make(map[string]CommandAction),
-	}
-	initializeRootCmd(cli)
-	return cli
 }

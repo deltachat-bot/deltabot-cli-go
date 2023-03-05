@@ -17,13 +17,7 @@ go get -u github.com/deltachat-bot/deltabot-cli-go
 ### Installing deltachat-rpc-server
 
 This package depends on a standalone Delta Chat RPC server `deltachat-rpc-server` program that must be
-available in your `PATH`. To install it run:
-
-```sh
-cargo install --git https://github.com/deltachat/deltachat-core-rust/ deltachat-rpc-server
-```
-
-For more info check:
+available in your `PATH`. For installation instructions check:
 https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server
 
 ## Usage
@@ -34,18 +28,21 @@ Example echo-bot written with deltabot-cli:
 package main
 
 import (
-    "github.com/deltachat-bot/deltabot-cli-go/botcli"
-    "github.com/deltachat/deltachat-rpc-client-go/deltachat"
+	"github.com/deltachat-bot/deltabot-cli-go/botcli"
+	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
+	"github.com/spf13/cobra"
 )
 
 func main() {
-    cli := botcli.New("echobot")
-    cli.OnNewMsg(func(msg *deltachat.Message) {
-        snapshot, _ := msg.Snapshot()
-        chat := snapshot["chat"].(*deltachat.Chat)
-        chat.SendText(snapshot["text"].(string))
-    })
-    cli.Start()
+	cli := botcli.New("echobot")
+	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+		bot.OnNewMsg(func(msg *deltachat.Message) {
+			snapshot, _ := msg.Snapshot()
+			chat := deltachat.Chat{bot.Account, snapshot.ChatId}
+			chat.SendText(snapshot.Text)
+		})
+	})
+	cli.Start()
 }
 ```
 

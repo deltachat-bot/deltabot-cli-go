@@ -10,14 +10,14 @@ import (
 
 var cli *botcli.BotCli
 
-func logEvent(event map[string]any) {
-	switch event["type"].(string) {
+func logEvent(event *deltachat.Event) {
+	switch event.Type {
 	case deltachat.EVENT_INFO:
-		cli.Logger.Info(event["msg"].(string))
+		cli.Logger.Info(event.Msg)
 	case deltachat.EVENT_WARNING:
-		cli.Logger.Warn(event["msg"].(string))
+		cli.Logger.Warn(event.Msg)
 	case deltachat.EVENT_ERROR:
-		cli.Logger.Error(event["msg"].(string))
+		cli.Logger.Error(event.Msg)
 	}
 }
 
@@ -32,7 +32,7 @@ func main() {
 	cli.AddCommand(infoCmd, func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		sysinfo, _ := bot.Account.Manager.SystemInfo()
 		for key, val := range sysinfo {
-			fmt.Printf("%v=%q\n", key, val)
+			fmt.Printf("%v=%#v\n", key, val)
 		}
 	})
 
@@ -42,8 +42,8 @@ func main() {
 		bot.On(deltachat.EVENT_ERROR, logEvent)
 		bot.OnNewMsg(func(msg *deltachat.Message) {
 			snapshot, _ := msg.Snapshot()
-			chat := snapshot["chat"].(*deltachat.Chat)
-			chat.SendText(snapshot["text"].(string))
+			chat := deltachat.Chat{bot.Account, snapshot.ChatId}
+			chat.SendText(snapshot.Text)
 		})
 	})
 	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {

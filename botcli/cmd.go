@@ -37,23 +37,19 @@ func initializeRootCmd(cli *BotCli) {
 }
 
 func (self *BotCli) initAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	bot.On(deltachat.EVENT_CONFIGURE_PROGRESS, func(event *deltachat.Event) {
+		if event.Progress == 1000 || event.Progress == 0 {
+			go bot.Stop()
+		}
+	})
 	result := make(chan error)
 	go func() { result <- bot.Configure(args[0], args[1]) }()
-	bot.RunWhile(func(event map[string]any) bool {
-		if event["type"].(string) == deltachat.EVENT_CONFIGURE_PROGRESS {
-			progress := int(event["progress"].(float64))
-			if progress == 1000 || progress == -1 {
-				return false
-			}
-		}
-		return true
-	})
+	bot.Run()
 	if err := <-result; err != nil {
 		self.Logger.Error(fmt.Sprintf("Configuration failed: %v", err))
 	} else {
 		self.Logger.Info("Account configured successfully.")
 	}
-
 }
 
 func (self *BotCli) configAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {

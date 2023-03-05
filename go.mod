@@ -3,7 +3,7 @@ module github.com/deltachat-bot/deltabot-cli-go
 go 1.19
 
 require (
-	github.com/deltachat/deltachat-rpc-client-go v0.0.0-20230222214516-eeee0f8b44ea
+	github.com/deltachat/deltachat-rpc-client-go v0.2.0
 	github.com/spf13/cobra v1.6.1
 	go.uber.org/zap v1.24.0
 )
