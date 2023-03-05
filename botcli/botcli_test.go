@@ -10,14 +10,14 @@ import (
 
 var cli *BotCli
 
-func logEvent(event map[string]any) {
-	switch event["type"].(string) {
+func logEvent(event *deltachat.Event) {
+	switch event.Type {
 	case deltachat.EVENT_INFO:
-		cli.Logger.Info(event["msg"].(string))
+		cli.Logger.Info().Msg(event.Msg)
 	case deltachat.EVENT_WARNING:
-		cli.Logger.Warn(event["msg"].(string))
+		cli.Logger.Warn().Msg(event.Msg)
 	case deltachat.EVENT_ERROR:
-		cli.Logger.Error(event["msg"].(string))
+		cli.Logger.Error().Msg(event.Msg)
 	}
 }
 
@@ -42,13 +42,13 @@ func TestBasic(t *testing.T) {
 		bot.On(deltachat.EVENT_ERROR, logEvent)
 		bot.OnNewMsg(func(msg *deltachat.Message) {
 			snapshot, _ := msg.Snapshot()
-			chat := snapshot["chat"].(*deltachat.Chat)
-			chat.SendText(snapshot["text"].(string))
+			chat := deltachat.Chat{bot.Account, snapshot.ChatId}
+			chat.SendText(snapshot.Text)
 		})
 	})
 	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		addr, _ := bot.GetConfig("addr")
-		cli.Logger.Info(fmt.Sprintf("Listening at: %v", addr))
+		cli.Logger.Info().Msgf("Listening at: %v", addr)
 	})
 	cli.Start()
 }

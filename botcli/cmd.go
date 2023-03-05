@@ -38,6 +38,7 @@ func initializeRootCmd(cli *BotCli) {
 
 func (self *BotCli) initAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	bot.On(deltachat.EVENT_CONFIGURE_PROGRESS, func(event *deltachat.Event) {
+		self.Logger.Info().Msgf("Configuration progress: %v", event.Progress)
 		if event.Progress == 1000 || event.Progress == 0 {
 			go bot.Stop()
 		}
@@ -46,9 +47,9 @@ func (self *BotCli) initAction(bot *deltachat.Bot, cmd *cobra.Command, args []st
 	go func() { result <- bot.Configure(args[0], args[1]) }()
 	bot.Run()
 	if err := <-result; err != nil {
-		self.Logger.Error(fmt.Sprintf("Configuration failed: %v", err))
+		self.Logger.Error().Msgf("Configuration failed: %v", err)
 	} else {
-		self.Logger.Info("Account configured successfully.")
+		self.Logger.Info().Msg("Account configured successfully.")
 	}
 }
 
@@ -73,7 +74,7 @@ func (self *BotCli) configAction(bot *deltachat.Bot, cmd *cobra.Command, args []
 	if err == nil {
 		fmt.Printf("%v=%v", args[0], val)
 	} else {
-		self.Logger.Error(err.Error())
+		self.Logger.Error().Err(err)
 	}
 }
 
@@ -84,6 +85,6 @@ func (self *BotCli) serveAction(bot *deltachat.Bot, cmd *cobra.Command, args []s
 		}
 		bot.Run()
 	} else {
-		self.Logger.Error("account not configured")
+		self.Logger.Error().Msg("account not configured")
 	}
 }

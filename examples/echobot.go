@@ -13,11 +13,11 @@ var cli *botcli.BotCli
 func logEvent(event *deltachat.Event) {
 	switch event.Type {
 	case deltachat.EVENT_INFO:
-		cli.Logger.Info(event.Msg)
+		cli.Logger.Info().Msg(event.Msg)
 	case deltachat.EVENT_WARNING:
-		cli.Logger.Warn(event.Msg)
+		cli.Logger.Warn().Msg(event.Msg)
 	case deltachat.EVENT_ERROR:
-		cli.Logger.Error(event.Msg)
+		cli.Logger.Error().Msg(event.Msg)
 	}
 }
 
@@ -48,7 +48,7 @@ func main() {
 	})
 	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		addr, _ := bot.GetConfig("addr")
-		cli.Logger.Info(fmt.Sprintf("Listening at: %v", addr))
+		cli.Logger.Info().Msgf("Listening at: %v", addr)
 	})
 	cli.Start()
 }

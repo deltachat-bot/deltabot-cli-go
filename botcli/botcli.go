@@ -2,10 +2,11 @@ package botcli
 
 import (
 	"os"
+	"time"
 
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 )
 
 type _ParsedCmd struct {
@@ -17,7 +18,7 @@ type BotCli struct {
 	AppName       string
 	AppDir        string
 	RootCmd       *cobra.Command
-	Logger        *zap.Logger
+	Logger        *zerolog.Logger
 	actionsMap    map[string]CommandAction
 	parsedCmd     *_ParsedCmd
 	onInitAction  func(bot *deltachat.Bot, cmd *cobra.Command, args []string)
@@ -26,11 +27,13 @@ type BotCli struct {
 
 // Create a new BotCli instance
 func New(appName string) *BotCli {
-	logger, _ := zap.NewProduction()
+	output := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}
+	logger := zerolog.New(output).With().Timestamp().Logger()
+
 	cli := &BotCli{
 		AppName:    appName,
 		RootCmd:    &cobra.Command{Use: os.Args[0]},
-		Logger:     logger,
+		Logger:     &logger,
 		actionsMap: make(map[string]CommandAction),
 	}
 	initializeRootCmd(cli)
@@ -49,7 +52,6 @@ func (self *BotCli) OnBotStart(action func(bot *deltachat.Bot, cmd *cobra.Comman
 
 // Run the CLI program
 func (self *BotCli) Start() {
-	defer self.Logger.Sync()
 	err := self.RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
