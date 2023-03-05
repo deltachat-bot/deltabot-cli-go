@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
-	"github.com/spf13/cobra"
 	"github.com/rs/zerolog"
+	"github.com/spf13/cobra"
 )
 
 type _ParsedCmd struct {
