@@ -63,6 +63,15 @@ func (self *BotCli) Start() {
 		defer rpc.Stop()
 		rpc.Start()
 		bot := deltachat.NewBotFromAccountManager(&deltachat.AccountManager{rpc})
+		bot.On(deltachat.EVENT_INFO, func(event *deltachat.Event) {
+			self.Logger.Info().Msg(event.Msg)
+		})
+		bot.On(deltachat.EVENT_WARNING, func(event *deltachat.Event) {
+			self.Logger.Warn().Msg(event.Msg)
+		})
+		bot.On(deltachat.EVENT_ERROR, func(event *deltachat.Event) {
+			self.Logger.Error().Msg(event.Msg)
+		})
 		if self.onInitAction != nil {
 			self.onInitAction(bot, self.parsedCmd.cmd, self.parsedCmd.args)
 		}
