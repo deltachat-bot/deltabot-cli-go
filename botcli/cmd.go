@@ -2,9 +2,11 @@ package botcli
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
+	"github.com/mdp/qrterminal/v3"
 	"github.com/spf13/cobra"
 )
 
@@ -34,6 +36,14 @@ func initializeRootCmd(cli *BotCli) {
 		Args:  cobra.ExactArgs(0),
 	}
 	cli.AddCommand(serveCmd, cli.serveAction)
+
+	qrCmd := &cobra.Command{
+		Use:   "qr",
+		Short: "get bot's verification QR",
+		Args:  cobra.ExactArgs(0),
+	}
+	qrCmd.Flags().BoolP("invert", "i", false, "Invert QR colors")
+	cli.AddCommand(qrCmd, cli.qrAction)
 }
 
 func (self *BotCli) initAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
@@ -84,6 +94,39 @@ func (self *BotCli) serveAction(bot *deltachat.Bot, cmd *cobra.Command, args []s
 			self.onStartAction(bot, self.parsedCmd.cmd, self.parsedCmd.args)
 		}
 		bot.Run()
+	} else {
+		self.Logger.Error().Msg("account not configured")
+	}
+}
+
+func (self *BotCli) qrAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	if bot.IsConfigured() {
+		qrdata, _, err := bot.Account.QrCode()
+		if err != nil {
+			self.Logger.Error().Err(err).Msg("Failed to generate QR")
+			return
+		}
+		config := qrterminal.Config{
+			Level:          qrterminal.M,
+			Writer:         os.Stdout,
+			HalfBlocks:     true,
+			BlackChar:      qrterminal.BLACK_BLACK,
+			WhiteBlackChar: qrterminal.WHITE_BLACK,
+			WhiteChar:      qrterminal.WHITE_WHITE,
+			BlackWhiteChar: qrterminal.BLACK_WHITE,
+			QuietZone:      4,
+		}
+		invert, _ := cmd.Flags().GetBool("invert")
+		if invert {
+			config.BlackChar = qrterminal.WHITE_WHITE
+			config.WhiteBlackChar = qrterminal.BLACK_WHITE
+			config.WhiteChar = qrterminal.BLACK_BLACK
+			config.BlackWhiteChar = qrterminal.WHITE_BLACK
+		}
+		addr, _ := bot.GetConfig("addr")
+		fmt.Println("Scan this QR to verify", addr)
+		qrterminal.GenerateWithConfig(qrdata, config)
+		fmt.Println(qrdata)
 	} else {
 		self.Logger.Error().Msg("account not configured")
 	}
