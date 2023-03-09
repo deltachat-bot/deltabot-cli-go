@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
-	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 type _ParsedCmd struct {
@@ -17,7 +17,7 @@ type BotCli struct {
 	AppName       string
 	AppDir        string
 	RootCmd       *cobra.Command
-	Logger        *zerolog.Logger
+	Logger        *zap.SugaredLogger
 	actionsMap    map[string]CommandAction
 	parsedCmd     *_ParsedCmd
 	onInitAction  func(bot *deltachat.Bot, cmd *cobra.Command, args []string)
@@ -26,13 +26,13 @@ type BotCli struct {
 
 // Create a new BotCli instance
 func New(appName string) *BotCli {
-	output := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "2006-01-02T15:04:05Z"}
-	logger := zerolog.New(output).With().Timestamp().Logger()
+	logger, _ := zap.NewDevelopment()
+	sugar := logger.Sugar()
 
 	cli := &BotCli{
 		AppName:    appName,
 		RootCmd:    &cobra.Command{Use: os.Args[0]},
-		Logger:     &logger,
+		Logger:     sugar,
 		actionsMap: make(map[string]CommandAction),
 	}
 	initializeRootCmd(cli)
@@ -51,6 +51,7 @@ func (self *BotCli) OnBotStart(action func(bot *deltachat.Bot, cmd *cobra.Comman
 
 // Run the CLI program
 func (self *BotCli) Start() {
+	defer self.Logger.Sync() // flushes buffer, if any
 	err := self.RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -64,13 +65,13 @@ func (self *BotCli) Start() {
 		rpc.Start()
 		bot := deltachat.NewBotFromAccountManager(&deltachat.AccountManager{rpc})
 		bot.On(deltachat.EVENT_INFO, func(event *deltachat.Event) {
-			self.Logger.Info().Msg(event.Msg)
+			self.Logger.Info(event.Msg)
 		})
 		bot.On(deltachat.EVENT_WARNING, func(event *deltachat.Event) {
-			self.Logger.Warn().Msg(event.Msg)
+			self.Logger.Warn(event.Msg)
 		})
 		bot.On(deltachat.EVENT_ERROR, func(event *deltachat.Event) {
-			self.Logger.Error().Msg(event.Msg)
+			self.Logger.Error(event.Msg)
 		})
 		if self.onInitAction != nil {
 			self.onInitAction(bot, self.parsedCmd.cmd, self.parsedCmd.args)

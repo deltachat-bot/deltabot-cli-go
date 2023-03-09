@@ -48,7 +48,7 @@ func initializeRootCmd(cli *BotCli) {
 
 func (self *BotCli) initAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	bot.On(deltachat.EVENT_CONFIGURE_PROGRESS, func(event *deltachat.Event) {
-		self.Logger.Info().Msgf("Configuration progress: %v", event.Progress)
+		self.Logger.Infof("Configuration progress: %v", event.Progress)
 		if event.Progress == 1000 || event.Progress == 0 {
 			go bot.Stop()
 		}
@@ -57,9 +57,9 @@ func (self *BotCli) initAction(bot *deltachat.Bot, cmd *cobra.Command, args []st
 	go func() { result <- bot.Configure(args[0], args[1]) }()
 	bot.Run()
 	if err := <-result; err != nil {
-		self.Logger.Error().Msgf("Configuration failed: %v", err)
+		self.Logger.Errorf("Configuration failed: %v", err)
 	} else {
-		self.Logger.Info().Msg("Account configured successfully.")
+		self.Logger.Info("Account configured successfully.")
 	}
 }
 
@@ -84,7 +84,7 @@ func (self *BotCli) configAction(bot *deltachat.Bot, cmd *cobra.Command, args []
 	if err == nil {
 		fmt.Printf("%v=%v", args[0], val)
 	} else {
-		self.Logger.Error().Err(err)
+		self.Logger.Error(err)
 	}
 }
 
@@ -95,7 +95,7 @@ func (self *BotCli) serveAction(bot *deltachat.Bot, cmd *cobra.Command, args []s
 		}
 		bot.Run()
 	} else {
-		self.Logger.Error().Msg("account not configured")
+		self.Logger.Error("account not configured")
 	}
 }
 
@@ -103,7 +103,7 @@ func (self *BotCli) qrAction(bot *deltachat.Bot, cmd *cobra.Command, args []stri
 	if bot.IsConfigured() {
 		qrdata, _, err := bot.Account.QrCode()
 		if err != nil {
-			self.Logger.Error().Err(err).Msg("Failed to generate QR")
+			self.Logger.Errorf("Failed to generate QR: %v", err)
 			return
 		}
 		config := qrterminal.Config{
@@ -128,6 +128,6 @@ func (self *BotCli) qrAction(bot *deltachat.Bot, cmd *cobra.Command, args []stri
 		qrterminal.GenerateWithConfig(qrdata, config)
 		fmt.Println(qrdata)
 	} else {
-		self.Logger.Error().Msg("account not configured")
+		self.Logger.Error("account not configured")
 	}
 }

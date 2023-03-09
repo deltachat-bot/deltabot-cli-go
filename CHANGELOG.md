@@ -3,6 +3,7 @@
 ## Unreleased
 
 - add `qr` subcommand
+- switch to zap logger
 
 ## v0.2.0
 
