@@ -82,7 +82,7 @@ func (self *BotCli) configAction(bot *deltachat.Bot, cmd *cobra.Command, args []
 		val, err = bot.GetConfig(args[0])
 	}
 	if err == nil {
-		fmt.Printf("%v=%v", args[0], val)
+		fmt.Printf("%v=%v\n", args[0], val)
 	} else {
 		self.Logger.Error(err)
 	}

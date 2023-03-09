@@ -4,6 +4,7 @@
 
 - add `qr` subcommand
 - switch to zap logger
+- update configAction() to print a new line in the returned config value
 
 ## v0.2.0
 
