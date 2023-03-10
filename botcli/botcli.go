@@ -59,7 +59,9 @@ func (self *BotCli) Start() {
 		rpc := deltachat.NewRpcIO()
 		rpc.AccountsDir = getAccountsDir(self.AppDir)
 		defer rpc.Stop()
-		rpc.Start()
+		if err := rpc.Start(); err != nil {
+			self.Logger.Panicf("Failed to start RPC server, read https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server for installation instructions. Error message: %v", err)
+		}
 		bot := deltachat.NewBotFromAccountManager(&deltachat.AccountManager{rpc})
 		bot.On(deltachat.EVENT_INFO, func(event *deltachat.Event) {
 			self.Logger.Info(event.Msg)
