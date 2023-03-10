@@ -26,13 +26,10 @@ type BotCli struct {
 
 // Create a new BotCli instance
 func New(appName string) *BotCli {
-	logger, _ := zap.NewDevelopment()
-	sugar := logger.Sugar()
-
 	cli := &BotCli{
 		AppName:    appName,
 		RootCmd:    &cobra.Command{Use: os.Args[0]},
-		Logger:     sugar,
+		Logger:     getLogger(),
 		actionsMap: make(map[string]CommandAction),
 	}
 	initializeRootCmd(cli)
