@@ -7,6 +7,18 @@ then
     exit 1
 fi
 
+if ! command -v golangci-lint &> /dev/null
+then
+    # binary will be $(go env GOPATH)/bin/golangci-lint
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2
+fi
+
+
+if ! golangci-lint run
+then
+    exit 1
+fi
+
 if ! command -v deltachat-rpc-server &> /dev/null
 then
     echo "deltachat-rpc-server could not be found, installing..."
@@ -22,7 +34,13 @@ then
 fi
 
 # test examples
-for i in ./examples/*.go; do go build -v "$i"; done
+for i in ./examples/*.go
+do
+    if ! go build -v "$i"
+    then
+        exit 1
+    fi
+done
 
-courtney -v -t="./..."
+courtney -v -t="./..." ${TEST_EXTRA_TAGS:--t="-parallel=1"}
 go tool cover -func=coverage.out -o=coverage-percent.out

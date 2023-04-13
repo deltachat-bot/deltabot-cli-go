@@ -48,21 +48,24 @@ func (self *BotCli) OnBotStart(action func(bot *deltachat.Bot, cmd *cobra.Comman
 
 // Run the CLI program
 func (self *BotCli) Start() error {
-	defer self.Logger.Sync() // flushes buffer, if any
+	defer self.Logger.Sync() //nolint:errcheck
 	err := self.RootCmd.Execute()
 	if err != nil {
 		return err
 	}
 
 	if self.parsedCmd != nil {
-		os.MkdirAll(self.AppDir, os.ModePerm)
+		err = os.MkdirAll(self.AppDir, os.ModePerm)
+		if err != nil {
+			return err
+		}
 		rpc := deltachat.NewRpcIO()
 		rpc.AccountsDir = getAccountsDir(self.AppDir)
 		defer rpc.Stop()
 		if err := rpc.Start(); err != nil {
 			self.Logger.Panicf("Failed to start RPC server, read https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server for installation instructions. Error message: %v", err)
 		}
-		bot := deltachat.NewBotFromAccountManager(&deltachat.AccountManager{rpc})
+		bot := deltachat.NewBotFromAccountManager(&deltachat.AccountManager{Rpc: rpc})
 		bot.On(deltachat.EventInfo{}, func(event deltachat.Event) {
 			self.Logger.Info(event.(deltachat.EventInfo).Msg)
 		})

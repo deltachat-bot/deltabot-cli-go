@@ -60,7 +60,7 @@ func (self *BotCli) initAction(bot *deltachat.Bot, cmd *cobra.Command, args []st
 		}
 		bot.Stop()
 	}()
-	bot.Run()
+	bot.Run() //nolint:errcheck
 }
 
 func (self *BotCli) configAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
@@ -93,7 +93,7 @@ func (self *BotCli) serveAction(bot *deltachat.Bot, cmd *cobra.Command, args []s
 		if self.onStartAction != nil {
 			self.onStartAction(bot, self.parsedCmd.cmd, self.parsedCmd.args)
 		}
-		bot.Run()
+		bot.Run() //nolint:errcheck
 	} else {
 		self.Logger.Error("account not configured")
 	}

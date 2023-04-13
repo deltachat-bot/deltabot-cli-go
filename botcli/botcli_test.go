@@ -10,6 +10,7 @@ import (
 )
 
 func TestBotCli_AddCommand(t *testing.T) {
+	t.Parallel()
 	cli := New("testbot")
 	var called bool
 	testCmd := &cobra.Command{
@@ -26,12 +27,13 @@ func TestBotCli_AddCommand(t *testing.T) {
 }
 
 func TestBotCli_OnBotStart(t *testing.T) {
+	t.Parallel()
 	cli := New("testbot")
 	var cliBot *deltachat.Bot
 	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		cliBot = bot
 	})
-	go RunConfiguredCli(cli, "serve")
+	go RunConfiguredCli(cli, "serve") //nolint:errcheck
 	for {
 		if cliBot != nil && cliBot.IsRunning() {
 			break
@@ -41,6 +43,7 @@ func TestBotCli_OnBotStart(t *testing.T) {
 }
 
 func TestBotCli_OnBotInit(t *testing.T) {
+	t.Parallel()
 	cli := New("testbot")
 	onEventInfoCalled := make(chan deltachat.Event, 1)
 	onNewMsgCalled := make(chan *deltachat.MsgSnapshot, 1)
@@ -61,7 +64,7 @@ func TestBotCli_OnBotInit(t *testing.T) {
 			}
 		})
 	})
-	go RunConfiguredCli(cli, "serve")
+	go RunConfiguredCli(cli, "serve") //nolint:errcheck
 	for {
 		if cliBot != nil && cliBot.IsRunning() {
 			break
@@ -77,12 +80,14 @@ func TestBotCli_OnBotInit(t *testing.T) {
 	chatWithBot, err := acfactory.CreateChat(user, cliBot.Account)
 	assert.Nil(t, err)
 
-	chatWithBot.SendText("hi")
+	_, err = chatWithBot.SendText("hi")
+	assert.Nil(t, err)
 	msg := <-onNewMsgCalled
 	assert.Equal(t, "hi", msg.Text)
 }
 
 func TestBotCli_initAction(t *testing.T) {
+	t.Parallel()
 	acc := acfactory.UnconfiguredAccount()
 	defer acfactory.StopRpc(acc)
 
@@ -111,6 +116,7 @@ func TestBotCli_initAction(t *testing.T) {
 }
 
 func TestBotCli_configAction(t *testing.T) {
+	t.Parallel()
 	var err error
 	var cliBot *deltachat.Bot
 	cli := New("testbot")
@@ -124,7 +130,7 @@ func TestBotCli_configAction(t *testing.T) {
 	_, err = RunCli(cli, "config", "addr", "test@example.com")
 	assert.Nil(t, err)
 
-	err = cliBot.Account.Manager.Rpc.Start()
+	assert.Nil(t, cliBot.Account.Manager.Rpc.Start())
 	defer acfactory.StopRpc(cliBot)
 
 	addr, err := cliBot.GetConfig("addr")
@@ -133,6 +139,7 @@ func TestBotCli_configAction(t *testing.T) {
 }
 
 func TestBotCli_qrAction(t *testing.T) {
+	t.Parallel()
 	var err error
 	cli := New("testbot")
 	_, err = RunCli(cli, "qr")
