@@ -27,31 +27,13 @@ https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-serve
 
 Example echo-bot written with deltabot-cli:
 
-```go
-package main
-
-import (
-	"github.com/deltachat-bot/deltabot-cli-go/botcli"
-	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
-	"github.com/spf13/cobra"
-)
-
-func main() {
-	cli := botcli.New("echobot")
-	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		bot.OnNewMsg(func(msg *deltachat.Message) {
-			snapshot, _ := msg.Snapshot()
-			chat := deltachat.Chat{bot.Account, snapshot.ChatId}
-			chat.SendText(snapshot.Text)
-		})
-	})
-	cli.Start()
-}
-```
+<!-- MARKDOWN-AUTO-DOCS:START (CODE:src=./examples/echobot.go) -->
+<!-- MARKDOWN-AUTO-DOCS:END -->
 
 Save the previous code snippet as `echobot.go` then run:
 
 ```sh
+go mod init echobot; go mod tidy
 go run ./echobot.go init bot@example.com PASSWORD
 go run ./echobot.go serve
 ```
