@@ -91,4 +91,4 @@ Check the [examples folder](https://github.com/deltachat-bot/deltabot-cli-go/tre
 more examples.
 
 This package depends on https://github.com/deltachat/deltachat-rpc-client-go library, check its
-documentation to better understand how to use the deltachat API.
+documentation to better understand how to use the Delta Chat API.
