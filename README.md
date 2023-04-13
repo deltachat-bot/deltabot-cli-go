@@ -62,7 +62,7 @@ func main() {
 	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		bot.OnNewMsg(func(msg *deltachat.Message) {
 			snapshot, _ := msg.Snapshot()
-			chat := &deltachat.Chat{bot.Account, snapshot.ChatId}
+			chat := &deltachat.Chat{snapshot.Account, snapshot.ChatId}
 			if snapshot.Text != "" { // ignore messages without text
 				chat.SendText(snapshot.Text)
 			}
