@@ -11,26 +11,52 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
 
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.19
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
 
-    - name: Run gofmt
-      run: |
-        OUTPUT=`gofmt -d .`; if [ -n "$OUTPUT" ]; then echo "$OUTPUT"; exit 1; fi
+      - name: Test
+        run: |
+          export TEST_DEBUG=1
+          bash ./scripts/run_tests.sh
 
-    - name: Build Examples
-      run: |
-        for i in ./examples/*.go; do go build -v "$i"; done
+      - name: Coverage Badge - Generate
+        if: github.event_name != 'pull_request'
+        uses: tj-actions/coverage-badge-go@v2
+        with:
+          filename: coverage-percent.out
 
-    - name: Install deltachat-rpc-server
-      run: |
-        rustup toolchain install 1.64.0
-        rustup override set 1.64.0
-        cargo install --git https://github.com/deltachat/deltachat-core-rust/ deltachat-rpc-server
+      - name: Coverage Badge - Verify Changed files
+        uses: tj-actions/verify-changed-files@v12
+        id: verify-changed-files
+        with:
+          files: README.md
 
-    - name: Test
-      run: go test -v ./...
+      - name: Coverage Badge - Commit changes
+        if: steps.verify-changed-files.outputs.files_changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md
+          git commit -m "chore: Updated coverage badge."
+
+      - name: Coverage Badge - Push changes
+        if: steps.verify-changed-files.outputs.files_changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref }}
+
+    services:
+      mail_server:
+        image: ghcr.io/deltachat/mail-server-tester:release
+        ports:
+          - 3025:25
+          - 3143:143
+          - 3465:465
+          - 3993:993

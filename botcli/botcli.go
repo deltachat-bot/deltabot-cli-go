@@ -47,11 +47,11 @@ func (self *BotCli) OnBotStart(action func(bot *deltachat.Bot, cmd *cobra.Comman
 }
 
 // Run the CLI program
-func (self *BotCli) Start() {
+func (self *BotCli) Start() error {
 	defer self.Logger.Sync() // flushes buffer, if any
 	err := self.RootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
 
 	if self.parsedCmd != nil {
@@ -63,14 +63,14 @@ func (self *BotCli) Start() {
 			self.Logger.Panicf("Failed to start RPC server, read https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server for installation instructions. Error message: %v", err)
 		}
 		bot := deltachat.NewBotFromAccountManager(&deltachat.AccountManager{rpc})
-		bot.On(deltachat.EVENT_INFO, func(event *deltachat.Event) {
-			self.Logger.Info(event.Msg)
+		bot.On(deltachat.EventInfo{}, func(event deltachat.Event) {
+			self.Logger.Info(event.(deltachat.EventInfo).Msg)
 		})
-		bot.On(deltachat.EVENT_WARNING, func(event *deltachat.Event) {
-			self.Logger.Warn(event.Msg)
+		bot.On(deltachat.EventWarning{}, func(event deltachat.Event) {
+			self.Logger.Warn(event.(deltachat.EventWarning).Msg)
 		})
-		bot.On(deltachat.EVENT_ERROR, func(event *deltachat.Event) {
-			self.Logger.Error(event.Msg)
+		bot.On(deltachat.EventError{}, func(event deltachat.Event) {
+			self.Logger.Error(event.(deltachat.EventError).Msg)
 		})
 		if self.onInitAction != nil {
 			self.onInitAction(bot, self.parsedCmd.cmd, self.parsedCmd.args)
@@ -78,6 +78,8 @@ func (self *BotCli) Start() {
 		action := self.actionsMap[self.parsedCmd.cmd.Use]
 		action(bot, self.parsedCmd.cmd, self.parsedCmd.args)
 	}
+
+	return nil
 }
 
 // Add a subcommand to the CLI. The given action will be executed when the command is used.
