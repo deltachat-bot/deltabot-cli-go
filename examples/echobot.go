@@ -37,7 +37,7 @@ func main() {
 		})
 	})
 	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		addr, _ := bot.GetConfig("addr")
+		addr, _ := bot.GetConfig("configured_addr")
 		cli.Logger.Infof("Listening at: %v", addr)
 	})
 	cli.Start()
