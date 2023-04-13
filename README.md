@@ -3,7 +3,7 @@
 ![Latest release](https://img.shields.io/github/v/tag/deltachat-bot/deltabot-cli-go?label=release)
 [![Go Reference](https://pkg.go.dev/badge/github.com/deltachat-bot/deltabot-cli-go.svg)](https://pkg.go.dev/github.com/deltachat-bot/deltabot-cli-go)
 [![CI](https://github.com/deltachat-bot/deltabot-cli-go/actions/workflows/ci.yml/badge.svg)](https://github.com/deltachat-bot/deltabot-cli-go/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/badge/Coverage-0%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-83.3%25-brightgreen)
 [![Go Report Card](https://goreportcard.com/badge/github.com/deltachat-bot/deltabot-cli-go)](https://goreportcard.com/report/github.com/deltachat-bot/deltabot-cli-go)
 
 Library to speedup Delta Chat bot development in Golang.
