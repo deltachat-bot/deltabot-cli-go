@@ -60,3 +60,6 @@ Use `go run ./echobot.go --help` to see all the available options.
 
 Check the [examples folder](https://github.com/deltachat-bot/deltabot-cli-go/tree/master/examples) for
 more examples.
+
+This package depends on https://github.com/deltachat/deltachat-rpc-client-go library, check its
+documentation to better understand how to use the deltachat API.
