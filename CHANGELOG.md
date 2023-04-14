@@ -5,6 +5,7 @@
 ## Added
 
 - added more tests and code coverage
+- add `BotCli.SetConfig()` and `BotCli.GetConfig()`
 
 ## Changed
 
