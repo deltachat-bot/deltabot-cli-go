@@ -184,6 +184,9 @@ func TestBotCli_qrCallback(t *testing.T) {
 
 	_, err = RunConfiguredCli(cli, "qr")
 	assert.Nil(t, err)
+
+	_, err = RunConfiguredCli(cli, "qr", "-i")
+	assert.Nil(t, err)
 }
 
 func TestBotCli_adminCallback(t *testing.T) {
@@ -194,5 +197,11 @@ func TestBotCli_adminCallback(t *testing.T) {
 	assert.Nil(t, err)
 
 	_, err = RunConfiguredCli(cli, "admin")
+	assert.Nil(t, err)
+
+	_, err = RunConfiguredCli(cli, "admin", "-i")
+	assert.Nil(t, err)
+
+	_, err = RunConfiguredCli(cli, "admin", "-r")
 	assert.Nil(t, err)
 }

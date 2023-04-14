@@ -39,7 +39,7 @@ func initializeRootCmd(cli *BotCli) {
 		Short: "get bot's verification QR",
 		Args:  cobra.ExactArgs(0),
 	}
-	qrCmd.Flags().BoolP("invert", "i", false, "Invert QR colors")
+	qrCmd.Flags().BoolP("invert", "i", false, "invert QR colors")
 	cli.AddCommand(qrCmd, cli.qrCallback)
 
 	adminCmd := &cobra.Command{
@@ -47,7 +47,8 @@ func initializeRootCmd(cli *BotCli) {
 		Short: "get the invitation QR to the bot administration group, WARNING: don't share this QR",
 		Args:  cobra.ExactArgs(0),
 	}
-	adminCmd.Flags().BoolP("invert", "i", false, "Invert QR colors")
+	adminCmd.Flags().BoolP("invert", "i", false, "invert QR colors")
+	adminCmd.Flags().BoolP("reset", "r", false, "reset admin chat, removes all existing admins")
 	cli.AddCommand(adminCmd, cli.adminCallback)
 }
 
@@ -129,10 +130,18 @@ func (self *BotCli) adminCallback(bot *deltachat.Bot, cmd *cobra.Command, args [
 
 	errMsg := "Failed to generate QR: %v"
 
-	value, err := self.GetConfig(bot, "admin-chat")
+	reset, err := cmd.Flags().GetBool("reset")
 	if err != nil {
 		self.Logger.Errorf(errMsg, err)
 		return
+	}
+	var value string
+	if !reset {
+		value, err = self.GetConfig(bot, "admin-chat")
+		if err != nil {
+			self.Logger.Errorf(errMsg, err)
+			return
+		}
 	}
 
 	var chat *deltachat.Chat
