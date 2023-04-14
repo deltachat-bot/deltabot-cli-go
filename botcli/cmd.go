@@ -42,6 +42,14 @@ func initializeRootCmd(cli *BotCli) {
 	}
 	qrCmd.Flags().BoolP("invert", "i", false, "Invert QR colors")
 	cli.AddCommand(qrCmd, cli.qrCallback)
+
+	adminCmd := &cobra.Command{
+		Use:   "admin",
+		Short: "get the invitation QR to the bot administration group, WARNING: don't share this QR",
+		Args:  cobra.ExactArgs(0),
+	}
+	adminCmd.Flags().BoolP("invert", "i", false, "Invert QR colors")
+	cli.AddCommand(adminCmd, cli.adminCallback)
 }
 
 func (self *BotCli) initCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {

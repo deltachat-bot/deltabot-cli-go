@@ -148,3 +148,15 @@ func TestBotCli_qrCallback(t *testing.T) {
 	_, err = RunConfiguredCli(cli, "qr")
 	assert.Nil(t, err)
 }
+
+func TestBotCli_SetConfig(t *testing.T) {
+	t.Parallel()
+	bot := acfactory.OnlineBot()
+	defer acfactory.StopRpc(bot)
+
+	cli := New("testbot")
+	assert.Nil(t, cli.SetConfig(bot, "testkey", "testing"))
+	value, err := cli.GetConfig(bot, "testkey")
+	assert.Nil(t, err)
+	assert.Equal(t, "testing", value)
+}

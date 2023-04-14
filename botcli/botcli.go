@@ -104,13 +104,13 @@ func (self *BotCli) AddCommand(cmd *cobra.Command, callback Callback) {
 // Store a custom program setting in the given bot. The setting is specific to your application.
 //
 // The setting is stored using Bot.SetUiConfig() and the key is prefixed with BotCli.AppName.
-func (self *BotCli) SetConfig(bot *deltachat.Bot, key, value string) {
-	bot.SetUiConfig(self.AppName+"."+key, value)
+func (self *BotCli) SetConfig(bot *deltachat.Bot, key, value string) error {
+	return bot.SetUiConfig(self.AppName+"."+key, value)
 }
 
 // Get a custom program setting from the given bot. The setting is specific to your application.
 //
 // The setting is retrieved using Bot.GetUiConfig() and the key is prefixed with BotCli.AppName.
-func (self *BotCli) GetConfig(bot *deltachat.Bot, key string) string {
+func (self *BotCli) GetConfig(bot *deltachat.Bot, key string) (string, error) {
 	return bot.GetUiConfig(self.AppName + "." + key)
 }
