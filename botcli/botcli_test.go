@@ -9,6 +9,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestBotCli_SetConfig(t *testing.T) {
+	t.Parallel()
+	bot := acfactory.OnlineBot()
+	defer acfactory.StopRpc(bot)
+
+	cli := New("testbot")
+	assert.Nil(t, cli.SetConfig(bot, "testkey", "testing"))
+	value, err := cli.GetConfig(bot, "testkey")
+	assert.Nil(t, err)
+	assert.Equal(t, "testing", value)
+}
+
+func TestBotCli_AdminChat(t *testing.T) {
+	t.Parallel()
+	bot := acfactory.OnlineBot()
+	defer acfactory.StopRpc(bot)
+
+	cli := New("testbot")
+	chat1, err := cli.AdminChat(bot)
+	assert.Nil(t, err)
+	chat2, err := cli.ResetAdminChat(bot)
+	assert.Nil(t, err)
+	assert.NotEqual(t, chat2.Id, chat1.Id)
+
+	isAdmin, err := cli.IsAdmin(bot, bot.Me())
+	assert.Nil(t, err)
+	assert.True(t, isAdmin)
+
+	acfactory.StopRpc(bot)
+	_, err = cli.AdminChat(bot)
+	assert.NotNil(t, err)
+	_, err = cli.ResetAdminChat(bot)
+	assert.NotNil(t, err)
+	_, err = cli.IsAdmin(bot, bot.Me())
+	assert.NotNil(t, err)
+}
+
 func TestBotCli_AddCommand(t *testing.T) {
 	t.Parallel()
 	cli := New("testbot")
@@ -149,14 +186,13 @@ func TestBotCli_qrCallback(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestBotCli_SetConfig(t *testing.T) {
+func TestBotCli_adminCallback(t *testing.T) {
 	t.Parallel()
-	bot := acfactory.OnlineBot()
-	defer acfactory.StopRpc(bot)
-
+	var err error
 	cli := New("testbot")
-	assert.Nil(t, cli.SetConfig(bot, "testkey", "testing"))
-	value, err := cli.GetConfig(bot, "testkey")
+	_, err = RunCli(cli, "admin")
 	assert.Nil(t, err)
-	assert.Equal(t, "testing", value)
+
+	_, err = RunConfiguredCli(cli, "admin")
+	assert.Nil(t, err)
 }

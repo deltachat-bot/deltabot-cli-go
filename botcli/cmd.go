@@ -2,11 +2,10 @@ package botcli
 
 import (
 	"fmt"
-	"os"
+	"strconv"
 	"strings"
 
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
-	"github.com/mdp/qrterminal/v3"
 	"github.com/spf13/cobra"
 )
 
@@ -112,28 +111,79 @@ func (self *BotCli) qrCallback(bot *deltachat.Bot, cmd *cobra.Command, args []st
 			self.Logger.Errorf("Failed to generate QR: %v", err)
 			return
 		}
-		config := qrterminal.Config{
-			Level:          qrterminal.M,
-			Writer:         os.Stdout,
-			HalfBlocks:     true,
-			BlackChar:      qrterminal.BLACK_BLACK,
-			WhiteBlackChar: qrterminal.WHITE_BLACK,
-			WhiteChar:      qrterminal.WHITE_WHITE,
-			BlackWhiteChar: qrterminal.BLACK_WHITE,
-			QuietZone:      4,
-		}
-		invert, _ := cmd.Flags().GetBool("invert")
-		if invert {
-			config.BlackChar = qrterminal.WHITE_WHITE
-			config.WhiteBlackChar = qrterminal.BLACK_WHITE
-			config.WhiteChar = qrterminal.BLACK_BLACK
-			config.BlackWhiteChar = qrterminal.WHITE_BLACK
-		}
 		addr, _ := bot.GetConfig("addr")
 		fmt.Println("Scan this QR to verify", addr)
-		qrterminal.GenerateWithConfig(qrdata, config)
+		invert, _ := cmd.Flags().GetBool("invert")
+		printQr(qrdata, invert)
 		fmt.Println(qrdata)
 	} else {
 		self.Logger.Error("account not configured")
 	}
+}
+
+func (self *BotCli) adminCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	if !bot.IsConfigured() {
+		self.Logger.Error("account not configured")
+		return
+	}
+
+	errMsg := "Failed to generate QR: %v"
+
+	value, err := self.GetConfig(bot, "admin-chat")
+	if err != nil {
+		self.Logger.Errorf(errMsg, err)
+		return
+	}
+
+	var chat *deltachat.Chat
+
+	if value != "" {
+		chatId, err := strconv.ParseUint(value, 10, 0)
+		if err != nil {
+			self.Logger.Errorf(errMsg, err)
+			return
+		}
+		chat = &deltachat.Chat{Account: bot.Account, Id: deltachat.ChatId(chatId)}
+		var selfInGroup bool
+		contacts, err := chat.Contacts()
+		if err != nil {
+			self.Logger.Errorf(errMsg, err)
+			return
+		}
+		me := bot.Me()
+		for _, contact := range contacts {
+			if me.Id == contact.Id {
+				selfInGroup = true
+				break
+			}
+		}
+		if !selfInGroup {
+			value = ""
+		}
+	}
+
+	if value == "" {
+		chat, err = bot.Account.CreateGroup("Bot Administrators", true)
+		if err != nil {
+			self.Logger.Errorf(errMsg, err)
+			return
+		}
+		value = strconv.FormatUint(uint64(chat.Id), 10)
+		err = self.SetConfig(bot, "admin-chat", value)
+		if err != nil {
+			self.Logger.Errorf(errMsg, err)
+			return
+		}
+	}
+
+	qrdata, _, err := chat.QrCode()
+	if err != nil {
+		self.Logger.Errorf(errMsg, err)
+		return
+	}
+
+	fmt.Println("Scan this QR to become bot administrator")
+	invert, _ := cmd.Flags().GetBool("invert")
+	printQr(qrdata, invert)
+	fmt.Println(qrdata)
 }

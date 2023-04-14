@@ -2,6 +2,7 @@ package botcli
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
 	"github.com/spf13/cobra"
@@ -113,4 +114,88 @@ func (self *BotCli) SetConfig(bot *deltachat.Bot, key, value string) error {
 // The setting is retrieved using Bot.GetUiConfig() and the key is prefixed with BotCli.AppName.
 func (self *BotCli) GetConfig(bot *deltachat.Bot, key string) (string, error) {
 	return bot.GetUiConfig(self.AppName + "." + key)
+}
+
+// Get the group of bot administrators.
+func (self *BotCli) AdminChat(bot *deltachat.Bot) (*deltachat.Chat, error) {
+	if !bot.IsConfigured() {
+		return nil, &BotNotConfiguredErr{}
+	}
+
+	value, err := self.GetConfig(bot, "admin-chat")
+	if err != nil {
+		return nil, err
+	}
+
+	var chat *deltachat.Chat
+
+	if value != "" {
+		chatId, err := strconv.ParseUint(value, 10, 0)
+		if err != nil {
+			return nil, err
+		}
+		chat = &deltachat.Chat{Account: bot.Account, Id: deltachat.ChatId(chatId)}
+		var selfInGroup bool
+		contacts, err := chat.Contacts()
+		if err != nil {
+			return nil, err
+		}
+		me := bot.Me()
+		for _, contact := range contacts {
+			if me.Id == contact.Id {
+				selfInGroup = true
+				break
+			}
+		}
+		if !selfInGroup {
+			value = ""
+		}
+	}
+
+	if value == "" {
+		chat, err = self.ResetAdminChat(bot)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return chat, nil
+}
+
+// Reset the group of bot administrators, all the members of the old group are no longer admins.
+func (self *BotCli) ResetAdminChat(bot *deltachat.Bot) (*deltachat.Chat, error) {
+	if !bot.IsConfigured() {
+		return nil, &BotNotConfiguredErr{}
+	}
+
+	chat, err := bot.Account.CreateGroup("Bot Administrators", true)
+	if err != nil {
+		return nil, err
+	}
+	value := strconv.FormatUint(uint64(chat.Id), 10)
+	err = self.SetConfig(bot, "admin-chat", value)
+	if err != nil {
+		return nil, err
+	}
+
+	return chat, nil
+}
+
+// Returns true if contact is in the bot administrators group, false otherwise.
+func (self *BotCli) IsAdmin(bot *deltachat.Bot, contact *deltachat.Contact) (bool, error) {
+	chat, err := self.AdminChat(bot)
+	if err != nil {
+		return false, err
+	}
+	contacts, err := chat.Contacts()
+	if err != nil {
+		return false, err
+	}
+	for _, member := range contacts {
+		if contact.Id == member.Id {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

@@ -4,8 +4,9 @@
 
 ## Added
 
-- added more tests and code coverage
+- add more tests and code coverage
 - add `BotCli.SetConfig()` and `BotCli.GetConfig()`
+- add `BotCli.AdminChat()`, `BotCli.ResetAdminChat()` and `BotCli.IsAdmin()`
 
 ## Changed
 
