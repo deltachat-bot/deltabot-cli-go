@@ -86,7 +86,7 @@ func TestBotCli_OnBotInit(t *testing.T) {
 	assert.Equal(t, "hi", msg.Text)
 }
 
-func TestBotCli_initAction(t *testing.T) {
+func TestBotCli_initCallback(t *testing.T) {
 	t.Parallel()
 	acc := acfactory.UnconfiguredAccount()
 	defer acfactory.StopRpc(acc)
@@ -115,7 +115,7 @@ func TestBotCli_initAction(t *testing.T) {
 	assert.True(t, configured)
 }
 
-func TestBotCli_configAction(t *testing.T) {
+func TestBotCli_configCallback(t *testing.T) {
 	t.Parallel()
 	var err error
 	var cliBot *deltachat.Bot
@@ -138,7 +138,7 @@ func TestBotCli_configAction(t *testing.T) {
 	assert.Equal(t, "test@example.com", addr)
 }
 
-func TestBotCli_qrAction(t *testing.T) {
+func TestBotCli_qrCallback(t *testing.T) {
 	t.Parallel()
 	var err error
 	cli := New("testbot")

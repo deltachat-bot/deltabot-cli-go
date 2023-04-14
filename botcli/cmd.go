@@ -10,8 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CommandAction func(bot *deltachat.Bot, cmd *cobra.Command, args []string)
-
 func initializeRootCmd(cli *BotCli) {
 	defDir := getDefaultAppDir(cli.AppName)
 	cli.RootCmd.PersistentFlags().StringVarP(&cli.AppDir, "folder", "f", defDir, "program's data folder")
@@ -21,21 +19,21 @@ func initializeRootCmd(cli *BotCli) {
 		Short: "initialize the Delta Chat account",
 		Args:  cobra.ExactArgs(2),
 	}
-	cli.AddCommand(initCmd, cli.initAction)
+	cli.AddCommand(initCmd, cli.initCallback)
 
 	configCmd := &cobra.Command{
 		Use:   "config",
 		Short: "set/get account configuration values",
 		Args:  cobra.MaximumNArgs(2),
 	}
-	cli.AddCommand(configCmd, cli.configAction)
+	cli.AddCommand(configCmd, cli.configCallback)
 
 	serveCmd := &cobra.Command{
 		Use:   "serve",
 		Short: "start processing messages",
 		Args:  cobra.ExactArgs(0),
 	}
-	cli.AddCommand(serveCmd, cli.serveAction)
+	cli.AddCommand(serveCmd, cli.serveCallback)
 
 	qrCmd := &cobra.Command{
 		Use:   "qr",
@@ -43,10 +41,10 @@ func initializeRootCmd(cli *BotCli) {
 		Args:  cobra.ExactArgs(0),
 	}
 	qrCmd.Flags().BoolP("invert", "i", false, "Invert QR colors")
-	cli.AddCommand(qrCmd, cli.qrAction)
+	cli.AddCommand(qrCmd, cli.qrCallback)
 }
 
-func (self *BotCli) initAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+func (self *BotCli) initCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	bot.On(deltachat.EventConfigureProgress{}, func(event deltachat.Event) {
 		ev := event.(deltachat.EventConfigureProgress)
 		self.Logger.Infof("Configuration progress: %v", ev.Progress)
@@ -63,7 +61,7 @@ func (self *BotCli) initAction(bot *deltachat.Bot, cmd *cobra.Command, args []st
 	bot.Run() //nolint:errcheck
 }
 
-func (self *BotCli) configAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+func (self *BotCli) configCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	var val string
 	var err error
 	if len(args) == 0 {
@@ -88,10 +86,10 @@ func (self *BotCli) configAction(bot *deltachat.Bot, cmd *cobra.Command, args []
 	}
 }
 
-func (self *BotCli) serveAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+func (self *BotCli) serveCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	if bot.IsConfigured() {
-		if self.onStartAction != nil {
-			self.onStartAction(bot, self.parsedCmd.cmd, self.parsedCmd.args)
+		if self.onStart != nil {
+			self.onStart(bot, self.parsedCmd.cmd, self.parsedCmd.args)
 		}
 		bot.Run() //nolint:errcheck
 	} else {
@@ -99,7 +97,7 @@ func (self *BotCli) serveAction(bot *deltachat.Bot, cmd *cobra.Command, args []s
 	}
 }
 
-func (self *BotCli) qrAction(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+func (self *BotCli) qrCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	if bot.IsConfigured() {
 		qrdata, _, err := bot.Account.QrCode()
 		if err != nil {

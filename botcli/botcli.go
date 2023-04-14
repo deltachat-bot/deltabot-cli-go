@@ -13,40 +13,44 @@ type _ParsedCmd struct {
 	args []string
 }
 
+// A function that can be used as callback in OnBotInit(), OnBotStart() and AddCommand().
+type Callback func(bot *deltachat.Bot, cmd *cobra.Command, args []string)
+
+// A CLI program, with subcommands that help configuring and running a Delta Chat bot.
 type BotCli struct {
-	AppName       string
-	AppDir        string
-	RootCmd       *cobra.Command
-	Logger        *zap.SugaredLogger
-	actionsMap    map[string]CommandAction
-	parsedCmd     *_ParsedCmd
-	onInitAction  func(bot *deltachat.Bot, cmd *cobra.Command, args []string)
-	onStartAction func(bot *deltachat.Bot, cmd *cobra.Command, args []string)
+	AppName   string
+	AppDir    string
+	RootCmd   *cobra.Command
+	Logger    *zap.SugaredLogger
+	cmdsMap   map[string]Callback
+	parsedCmd *_ParsedCmd
+	onInit    Callback
+	onStart   Callback
 }
 
-// Create a new BotCli instance
+// Create a new BotCli instance.
 func New(appName string) *BotCli {
 	cli := &BotCli{
-		AppName:    appName,
-		RootCmd:    &cobra.Command{Use: os.Args[0]},
-		Logger:     getLogger(),
-		actionsMap: make(map[string]CommandAction),
+		AppName: appName,
+		RootCmd: &cobra.Command{Use: os.Args[0]},
+		Logger:  getLogger(),
+		cmdsMap: make(map[string]Callback),
 	}
 	initializeRootCmd(cli)
 	return cli
 }
 
 // Register function to be called when the bot is initialized.
-func (self *BotCli) OnBotInit(action func(bot *deltachat.Bot, cmd *cobra.Command, args []string)) {
-	self.onInitAction = action
+func (self *BotCli) OnBotInit(callback Callback) {
+	self.onInit = callback
 }
 
 // Register function to be called if the bot is about to start serving requests.
-func (self *BotCli) OnBotStart(action func(bot *deltachat.Bot, cmd *cobra.Command, args []string)) {
-	self.onStartAction = action
+func (self *BotCli) OnBotStart(callback Callback) {
+	self.onStart = callback
 }
 
-// Run the CLI program
+// Run the CLI program.
 func (self *BotCli) Start() error {
 	defer self.Logger.Sync() //nolint:errcheck
 	err := self.RootCmd.Execute()
@@ -75,18 +79,18 @@ func (self *BotCli) Start() error {
 		bot.On(deltachat.EventError{}, func(event deltachat.Event) {
 			self.Logger.Error(event.(deltachat.EventError).Msg)
 		})
-		if self.onInitAction != nil {
-			self.onInitAction(bot, self.parsedCmd.cmd, self.parsedCmd.args)
+		if self.onInit != nil {
+			self.onInit(bot, self.parsedCmd.cmd, self.parsedCmd.args)
 		}
-		action := self.actionsMap[self.parsedCmd.cmd.Use]
-		action(bot, self.parsedCmd.cmd, self.parsedCmd.args)
+		callback := self.cmdsMap[self.parsedCmd.cmd.Use]
+		callback(bot, self.parsedCmd.cmd, self.parsedCmd.args)
 	}
 
 	return nil
 }
 
-// Add a subcommand to the CLI. The given action will be executed when the command is used.
-func (self *BotCli) AddCommand(cmd *cobra.Command, action CommandAction) {
+// Add a subcommand to the CLI. The given callback will be executed when the command is used.
+func (self *BotCli) AddCommand(cmd *cobra.Command, callback Callback) {
 	if cmd.Run != nil {
 		panic("Can not set cmd.Run property, it would be overriden")
 	}
@@ -94,5 +98,5 @@ func (self *BotCli) AddCommand(cmd *cobra.Command, action CommandAction) {
 		self.parsedCmd = &_ParsedCmd{cmd, args}
 	}
 	self.RootCmd.AddCommand(cmd)
-	self.actionsMap[cmd.Use] = action
+	self.cmdsMap[cmd.Use] = callback
 }
