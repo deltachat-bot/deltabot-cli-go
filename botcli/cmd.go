@@ -111,7 +111,7 @@ func (self *BotCli) qrCallback(bot *deltachat.Bot, cmd *cobra.Command, args []st
 			self.Logger.Errorf("Failed to generate QR: %v", err)
 			return
 		}
-		addr, _ := bot.GetConfig("addr")
+		addr, _ := bot.GetConfig("configured_addr")
 		fmt.Println("Scan this QR to verify", addr)
 		invert, _ := cmd.Flags().GetBool("invert")
 		printQr(qrdata, invert)
