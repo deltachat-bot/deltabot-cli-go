@@ -92,3 +92,9 @@ more examples.
 
 This package depends on https://github.com/deltachat/deltachat-rpc-client-go library, check its
 documentation to better understand how to use the Delta Chat API.
+
+## Template project
+
+To help you quickly creating new bots, we have prepared a project template with all the basic
+boilerplate, including unit tests, linter and GitHub CI to test and release your bot. Check it here:
+https://github.com/deltachat-bot/echobot-go
