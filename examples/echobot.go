@@ -8,10 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cli *botcli.BotCli
-
 func main() {
-	cli = botcli.New("echobot")
+	cli := botcli.New("echobot")
 
 	// add an "info" CLI subcommand as example
 	infoCmd := &cobra.Command{

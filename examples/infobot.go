@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cli *botcli.BotCli
+var cli *botcli.BotCli = botcli.New("infobot")
 
 // Process messages sent to the group of administrators and allow to run privileged commands there.
 func onNewMsg(bot *deltachat.Bot, msg *deltachat.Message) {
@@ -35,7 +35,6 @@ func onNewMsg(bot *deltachat.Bot, msg *deltachat.Message) {
 }
 
 func main() {
-	cli = botcli.New("echobot")
 	cli.OnBotInit(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		bot.OnNewMsg(onNewMsg)
 	})
