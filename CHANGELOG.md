@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## Changed
+
+- breaking: modified `Callback` type to accept an additional `*BotCli` parameter
+- updated to breaking changes in `deltachat-rpc-client-go v0.17.1-0.20230417222922-fd102c51053c`
+
+## v0.4.0
+
 ## Added
 
 - add more tests and code coverage
@@ -12,8 +19,6 @@
 
 - adapted to work with recent API changes in deltachat-rpc-client-go v0.16.1-0.20230413050235-ac4cbf9913e8
 - `BotCli.Start()` now returns an error instead of calling `os.Exit(1)`
-- breaking: modified `Callback` type to accept an additional `*BotCli` parameter
-- updated to breaking changes in `deltachat-rpc-client-go v0.17.1-0.20230417222922-fd102c51053c`
 
 ## v0.3.0
 
