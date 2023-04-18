@@ -3,7 +3,7 @@
 ![Latest release](https://img.shields.io/github/v/tag/deltachat-bot/deltabot-cli-go?label=release)
 [![Go Reference](https://pkg.go.dev/badge/github.com/deltachat-bot/deltabot-cli-go.svg)](https://pkg.go.dev/github.com/deltachat-bot/deltabot-cli-go)
 [![CI](https://github.com/deltachat-bot/deltabot-cli-go/actions/workflows/ci.yml/badge.svg)](https://github.com/deltachat-bot/deltabot-cli-go/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/badge/Coverage-78.1%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-78.6%25-brightgreen)
 [![Go Report Card](https://goreportcard.com/badge/github.com/deltachat-bot/deltabot-cli-go)](https://goreportcard.com/report/github.com/deltachat-bot/deltabot-cli-go)
 
 Library to speedup Delta Chat bot development in Golang.
@@ -51,7 +51,7 @@ func main() {
 		Short: "display information about the Delta Chat core running in this system",
 		Args:  cobra.ExactArgs(0),
 	}
-	cli.AddCommand(infoCmd, func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	cli.AddCommand(infoCmd, func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		sysinfo, _ := bot.Account.Manager.SystemInfo()
 		for key, val := range sysinfo {
 			fmt.Printf("%v=%#v\n", key, val)
@@ -59,16 +59,16 @@ func main() {
 	})
 
 	// incoming message handling
-	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		bot.OnNewMsg(func(msg *deltachat.Message) {
+	cli.OnBotInit(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+		bot.OnNewMsg(func(bot *deltachat.Bot, msg *deltachat.Message) {
 			snapshot, _ := msg.Snapshot()
-			chat := &deltachat.Chat{snapshot.Account, snapshot.ChatId}
+			chat := &deltachat.Chat{msg.Account, snapshot.ChatId}
 			if snapshot.Text != "" { // ignore messages without text
 				chat.SendText(snapshot.Text)
 			}
 		})
 	})
-	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	cli.OnBotStart(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		addr, _ := bot.GetConfig("configured_addr")
 		cli.Logger.Infof("Listening at: %v", addr)
 	})
