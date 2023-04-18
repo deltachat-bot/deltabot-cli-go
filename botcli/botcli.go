@@ -15,7 +15,7 @@ type _ParsedCmd struct {
 }
 
 // A function that can be used as callback in OnBotInit(), OnBotStart() and AddCommand().
-type Callback func(bot *deltachat.Bot, cmd *cobra.Command, args []string)
+type Callback func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string)
 
 // A CLI program, with subcommands that help configuring and running a Delta Chat bot.
 type BotCli struct {
@@ -71,20 +71,20 @@ func (self *BotCli) Start() error {
 			self.Logger.Panicf("Failed to start RPC server, read https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server for installation instructions. Error message: %v", err)
 		}
 		bot := deltachat.NewBotFromAccountManager(&deltachat.AccountManager{Rpc: rpc})
-		bot.On(deltachat.EventInfo{}, func(event deltachat.Event) {
+		bot.On(deltachat.EventInfo{}, func(bot *deltachat.Bot, event deltachat.Event) {
 			self.Logger.Info(event.(deltachat.EventInfo).Msg)
 		})
-		bot.On(deltachat.EventWarning{}, func(event deltachat.Event) {
+		bot.On(deltachat.EventWarning{}, func(bot *deltachat.Bot, event deltachat.Event) {
 			self.Logger.Warn(event.(deltachat.EventWarning).Msg)
 		})
-		bot.On(deltachat.EventError{}, func(event deltachat.Event) {
+		bot.On(deltachat.EventError{}, func(bot *deltachat.Bot, event deltachat.Event) {
 			self.Logger.Error(event.(deltachat.EventError).Msg)
 		})
 		if self.onInit != nil {
-			self.onInit(bot, self.parsedCmd.cmd, self.parsedCmd.args)
+			self.onInit(self, bot, self.parsedCmd.cmd, self.parsedCmd.args)
 		}
 		callback := self.cmdsMap[self.parsedCmd.cmd.Use]
-		callback(bot, self.parsedCmd.cmd, self.parsedCmd.args)
+		callback(self, bot, self.parsedCmd.cmd, self.parsedCmd.args)
 	}
 
 	return nil

@@ -55,7 +55,7 @@ func TestBotCli_AddCommand(t *testing.T) {
 		Short: "test subcommand",
 		Args:  cobra.ExactArgs(0),
 	}
-	cli.AddCommand(testCmd, func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	cli.AddCommand(testCmd, func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		called = true
 	})
 	_, err := RunCli(cli, "test")
@@ -67,7 +67,7 @@ func TestBotCli_OnBotStart(t *testing.T) {
 	t.Parallel()
 	cli := New("testbot")
 	var cliBot *deltachat.Bot
-	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	cli.OnBotStart(func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		cliBot = bot
 	})
 	go RunConfiguredCli(cli, "serve") //nolint:errcheck
@@ -85,15 +85,15 @@ func TestBotCli_OnBotInit(t *testing.T) {
 	onEventInfoCalled := make(chan deltachat.Event, 1)
 	onNewMsgCalled := make(chan *deltachat.MsgSnapshot, 1)
 	var cliBot *deltachat.Bot
-	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	cli.OnBotInit(func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		cliBot = bot
-		bot.On(deltachat.EventInfo{}, func(event deltachat.Event) {
+		bot.On(deltachat.EventInfo{}, func(bot *deltachat.Bot, event deltachat.Event) {
 			select {
 			case onEventInfoCalled <- event:
 			default:
 			}
 		})
-		bot.OnNewMsg(func(msg *deltachat.Message) {
+		bot.OnNewMsg(func(bot *deltachat.Bot, msg *deltachat.Message) {
 			snapshot, _ := msg.Snapshot()
 			select {
 			case onNewMsgCalled <- snapshot:
@@ -123,7 +123,7 @@ func TestBotCli_OnBotInit(t *testing.T) {
 	assert.Equal(t, "hi", msg.Text)
 }
 
-func TestBotCli_initCallback(t *testing.T) {
+func TestInitCallback(t *testing.T) {
 	t.Parallel()
 	acc := acfactory.UnconfiguredAccount()
 	defer acfactory.StopRpc(acc)
@@ -138,7 +138,7 @@ func TestBotCli_initCallback(t *testing.T) {
 	assert.Nil(t, err)
 
 	cli := New("testbot")
-	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	cli.OnBotInit(func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		bot.Account = acc
 	})
 
@@ -152,12 +152,12 @@ func TestBotCli_initCallback(t *testing.T) {
 	assert.True(t, configured)
 }
 
-func TestBotCli_configCallback(t *testing.T) {
+func TestConfigCallback(t *testing.T) {
 	t.Parallel()
 	var err error
 	var cliBot *deltachat.Bot
 	cli := New("testbot")
-	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	cli.OnBotInit(func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		cliBot = bot
 	})
 
@@ -175,7 +175,7 @@ func TestBotCli_configCallback(t *testing.T) {
 	assert.Equal(t, "test@example.com", addr)
 }
 
-func TestBotCli_qrCallback(t *testing.T) {
+func TestQrCallback(t *testing.T) {
 	t.Parallel()
 	var err error
 	cli := New("testbot")
@@ -189,7 +189,7 @@ func TestBotCli_qrCallback(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestBotCli_adminCallback(t *testing.T) {
+func TestAdminCallback(t *testing.T) {
 	t.Parallel()
 	var err error
 	cli := New("testbot")

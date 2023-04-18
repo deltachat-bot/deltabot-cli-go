@@ -3,7 +3,7 @@ module github.com/deltachat-bot/deltabot-cli-go
 go 1.19
 
 require (
-	github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230414134334-71f41fbdb931
+	github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230417222922-fd102c51053c
 	github.com/mdp/qrterminal/v3 v3.0.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.2
@@ -11,7 +11,8 @@ require (
 )
 
 require (
-	github.com/creachadair/jrpc2 v0.44.0 // indirect
+	github.com/creachadair/jrpc2 v1.0.0 // indirect
+	github.com/creachadair/mds v0.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

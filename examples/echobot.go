@@ -19,7 +19,7 @@ func main() {
 		Short: "display information about the Delta Chat core running in this system",
 		Args:  cobra.ExactArgs(0),
 	}
-	cli.AddCommand(infoCmd, func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	cli.AddCommand(infoCmd, func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		sysinfo, _ := bot.Account.Manager.SystemInfo()
 		for key, val := range sysinfo {
 			fmt.Printf("%v=%#v\n", key, val)
@@ -27,16 +27,16 @@ func main() {
 	})
 
 	// incoming message handling
-	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		bot.OnNewMsg(func(msg *deltachat.Message) {
+	cli.OnBotInit(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+		bot.OnNewMsg(func(bot *deltachat.Bot, msg *deltachat.Message) {
 			snapshot, _ := msg.Snapshot()
-			chat := &deltachat.Chat{snapshot.Account, snapshot.ChatId}
+			chat := &deltachat.Chat{msg.Account, snapshot.ChatId}
 			if snapshot.Text != "" { // ignore messages without text
 				chat.SendText(snapshot.Text)
 			}
 		})
 	})
-	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	cli.OnBotStart(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		addr, _ := bot.GetConfig("configured_addr")
 		cli.Logger.Infof("Listening at: %v", addr)
 	})

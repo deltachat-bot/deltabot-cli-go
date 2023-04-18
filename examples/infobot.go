@@ -36,8 +36,8 @@ func onNewMsg(bot *deltachat.Bot, msg *deltachat.Message) {
 
 func main() {
 	cli = botcli.New("echobot")
-	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		bot.OnNewMsg(func(msg *deltachat.Message) { onNewMsg(bot, msg) })
+	cli.OnBotInit(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+		bot.OnNewMsg(onNewMsg)
 	})
 	cli.Start()
 }

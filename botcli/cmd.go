@@ -18,21 +18,21 @@ func initializeRootCmd(cli *BotCli) {
 		Short: "initialize the Delta Chat account",
 		Args:  cobra.ExactArgs(2),
 	}
-	cli.AddCommand(initCmd, cli.initCallback)
+	cli.AddCommand(initCmd, initCallback)
 
 	configCmd := &cobra.Command{
 		Use:   "config",
 		Short: "set/get account configuration values",
 		Args:  cobra.MaximumNArgs(2),
 	}
-	cli.AddCommand(configCmd, cli.configCallback)
+	cli.AddCommand(configCmd, configCallback)
 
 	serveCmd := &cobra.Command{
 		Use:   "serve",
 		Short: "start processing messages",
 		Args:  cobra.ExactArgs(0),
 	}
-	cli.AddCommand(serveCmd, cli.serveCallback)
+	cli.AddCommand(serveCmd, serveCallback)
 
 	qrCmd := &cobra.Command{
 		Use:   "qr",
@@ -40,7 +40,7 @@ func initializeRootCmd(cli *BotCli) {
 		Args:  cobra.ExactArgs(0),
 	}
 	qrCmd.Flags().BoolP("invert", "i", false, "invert QR colors")
-	cli.AddCommand(qrCmd, cli.qrCallback)
+	cli.AddCommand(qrCmd, qrCallback)
 
 	adminCmd := &cobra.Command{
 		Use:   "admin",
@@ -49,27 +49,27 @@ func initializeRootCmd(cli *BotCli) {
 	}
 	adminCmd.Flags().BoolP("invert", "i", false, "invert QR colors")
 	adminCmd.Flags().BoolP("reset", "r", false, "reset admin chat, removes all existing admins")
-	cli.AddCommand(adminCmd, cli.adminCallback)
+	cli.AddCommand(adminCmd, adminCallback)
 }
 
-func (self *BotCli) initCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-	bot.On(deltachat.EventConfigureProgress{}, func(event deltachat.Event) {
+func initCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+	bot.On(deltachat.EventConfigureProgress{}, func(bot *deltachat.Bot, event deltachat.Event) {
 		ev := event.(deltachat.EventConfigureProgress)
-		self.Logger.Infof("Configuration progress: %v", ev.Progress)
+		cli.Logger.Infof("Configuration progress: %v", ev.Progress)
 	})
 
 	go func() {
 		if err := bot.Configure(args[0], args[1]); err != nil {
-			self.Logger.Errorf("Configuration failed: %v", err)
+			cli.Logger.Errorf("Configuration failed: %v", err)
 		} else {
-			self.Logger.Info("Account configured successfully.")
+			cli.Logger.Info("Account configured successfully.")
 		}
 		bot.Stop()
 	}()
 	bot.Run() //nolint:errcheck
 }
 
-func (self *BotCli) configCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+func configCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	var val string
 	var err error
 	if len(args) == 0 {
@@ -90,26 +90,26 @@ func (self *BotCli) configCallback(bot *deltachat.Bot, cmd *cobra.Command, args 
 	if err == nil {
 		fmt.Printf("%v=%v\n", args[0], val)
 	} else {
-		self.Logger.Error(err)
+		cli.Logger.Error(err)
 	}
 }
 
-func (self *BotCli) serveCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+func serveCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	if bot.IsConfigured() {
-		if self.onStart != nil {
-			self.onStart(bot, self.parsedCmd.cmd, self.parsedCmd.args)
+		if cli.onStart != nil {
+			cli.onStart(cli, bot, cmd, args)
 		}
 		bot.Run() //nolint:errcheck
 	} else {
-		self.Logger.Error("account not configured")
+		cli.Logger.Error("account not configured")
 	}
 }
 
-func (self *BotCli) qrCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+func qrCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	if bot.IsConfigured() {
 		qrdata, _, err := bot.Account.QrCode()
 		if err != nil {
-			self.Logger.Errorf("Failed to generate QR: %v", err)
+			cli.Logger.Errorf("Failed to generate QR: %v", err)
 			return
 		}
 		addr, _ := bot.GetConfig("configured_addr")
@@ -118,13 +118,13 @@ func (self *BotCli) qrCallback(bot *deltachat.Bot, cmd *cobra.Command, args []st
 		printQr(qrdata, invert)
 		fmt.Println(qrdata)
 	} else {
-		self.Logger.Error("account not configured")
+		cli.Logger.Error("account not configured")
 	}
 }
 
-func (self *BotCli) adminCallback(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+func adminCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	if !bot.IsConfigured() {
-		self.Logger.Error("account not configured")
+		cli.Logger.Error("account not configured")
 		return
 	}
 
@@ -132,14 +132,14 @@ func (self *BotCli) adminCallback(bot *deltachat.Bot, cmd *cobra.Command, args [
 
 	reset, err := cmd.Flags().GetBool("reset")
 	if err != nil {
-		self.Logger.Errorf(errMsg, err)
+		cli.Logger.Errorf(errMsg, err)
 		return
 	}
 	var value string
 	if !reset {
-		value, err = self.GetConfig(bot, "admin-chat")
+		value, err = cli.GetConfig(bot, "admin-chat")
 		if err != nil {
-			self.Logger.Errorf(errMsg, err)
+			cli.Logger.Errorf(errMsg, err)
 			return
 		}
 	}
@@ -149,14 +149,14 @@ func (self *BotCli) adminCallback(bot *deltachat.Bot, cmd *cobra.Command, args [
 	if value != "" {
 		chatId, err := strconv.ParseUint(value, 10, 0)
 		if err != nil {
-			self.Logger.Errorf(errMsg, err)
+			cli.Logger.Errorf(errMsg, err)
 			return
 		}
 		chat = &deltachat.Chat{Account: bot.Account, Id: deltachat.ChatId(chatId)}
 		var selfInGroup bool
 		contacts, err := chat.Contacts()
 		if err != nil {
-			self.Logger.Errorf(errMsg, err)
+			cli.Logger.Errorf(errMsg, err)
 			return
 		}
 		me := bot.Me()
@@ -174,20 +174,20 @@ func (self *BotCli) adminCallback(bot *deltachat.Bot, cmd *cobra.Command, args [
 	if value == "" {
 		chat, err = bot.Account.CreateGroup("Bot Administrators", true)
 		if err != nil {
-			self.Logger.Errorf(errMsg, err)
+			cli.Logger.Errorf(errMsg, err)
 			return
 		}
 		value = strconv.FormatUint(uint64(chat.Id), 10)
-		err = self.SetConfig(bot, "admin-chat", value)
+		err = cli.SetConfig(bot, "admin-chat", value)
 		if err != nil {
-			self.Logger.Errorf(errMsg, err)
+			cli.Logger.Errorf(errMsg, err)
 			return
 		}
 	}
 
 	qrdata, _, err := chat.QrCode()
 	if err != nil {
-		self.Logger.Errorf(errMsg, err)
+		cli.Logger.Errorf(errMsg, err)
 		return
 	}
 
