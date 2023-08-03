@@ -3,7 +3,7 @@
 ![Latest release](https://img.shields.io/github/v/tag/deltachat-bot/deltabot-cli-go?label=release)
 [![Go Reference](https://pkg.go.dev/badge/github.com/deltachat-bot/deltabot-cli-go.svg)](https://pkg.go.dev/github.com/deltachat-bot/deltabot-cli-go)
 [![CI](https://github.com/deltachat-bot/deltabot-cli-go/actions/workflows/ci.yml/badge.svg)](https://github.com/deltachat-bot/deltabot-cli-go/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/badge/Coverage-78.1%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-63.8%25-yellow)
 [![Go Report Card](https://goreportcard.com/badge/github.com/deltachat-bot/deltabot-cli-go)](https://goreportcard.com/report/github.com/deltachat-bot/deltabot-cli-go)
 
 Library to speedup Delta Chat bot development in Golang.
@@ -46,29 +46,33 @@ func main() {
 	// add an "info" CLI subcommand as example
 	infoCmd := &cobra.Command{
 		Use:   "info",
-		Short: "display information about the Delta Chat core running in this system",
+		Short: "display information about the Delta Chat core running in this system or about an specific account if one was selected with -a/--account",
 		Args:  cobra.ExactArgs(0),
 	}
 	cli.AddCommand(infoCmd, func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		sysinfo, _ := bot.Account.Manager.SystemInfo()
-		for key, val := range sysinfo {
+		var info map[string]string
+		if cli.SelectedAddr == "" { // no account selected with --a/--account, show system info
+			info, _ = bot.Rpc.GetSystemInfo()
+		} else { // account selected, show info about that account
+			accId, _ := cli.GetAccount(bot.Rpc, cli.SelectedAddr)
+			info, _ = bot.Rpc.GetInfo(accId)
+		}
+		for key, val := range info {
 			fmt.Printf("%v=%#v\n", key, val)
 		}
 	})
 
 	// incoming message handling
 	cli.OnBotInit(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		bot.OnNewMsg(func(bot *deltachat.Bot, msg *deltachat.Message) {
-			snapshot, _ := msg.Snapshot()
-			chat := &deltachat.Chat{msg.Account, snapshot.ChatId}
-			if snapshot.Text != "" { // ignore messages without text
-				chat.SendText(snapshot.Text)
+		bot.OnNewMsg(func(bot *deltachat.Bot, accId deltachat.AccountId, msgId deltachat.MsgId) {
+			msg, _ := bot.Rpc.GetMessage(accId, msgId)
+			if msg.FromId > deltachat.ContactLastSpecial && msg.Text != "" {
+				bot.Rpc.MiscSendTextMessage(accId, msg.ChatId, msg.Text)
 			}
 		})
 	})
 	cli.OnBotStart(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		addr, _ := bot.GetConfig("configured_addr")
-		cli.Logger.Infof("Listening at: %v", addr)
+		cli.Logger.Info("OnBotStart event triggered: bot started!")
 	})
 	cli.Start()
 }
