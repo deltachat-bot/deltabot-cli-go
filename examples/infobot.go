@@ -13,24 +13,26 @@ import (
 var cli *botcli.BotCli = botcli.New("infobot")
 
 // Process messages sent to the group of administrators and allow to run privileged commands there.
-func onNewMsg(bot *deltachat.Bot, msg *deltachat.Message) {
-	snapshot, _ := msg.Snapshot()
-	chat := &deltachat.Chat{snapshot.Account, snapshot.ChatId}
-	sender := &deltachat.Contact{snapshot.Account, snapshot.FromId}
-	isAdmin, _ := cli.IsAdmin(bot, sender)
-	adminChat, _ := cli.AdminChat(bot)
-	if !isAdmin || chat.Id != adminChat.Id {
+func onNewMsg(bot *deltachat.Bot, accId deltachat.AccountId, msgId deltachat.MsgId) {
+	msg, _ := bot.Rpc.GetMessage(accId, msgId)
+	if msg.FromId <= deltachat.ContactLastSpecial { // ignore message from self
 		return
 	}
 
-	switch snapshot.Text {
-	case "/info":
-		info, _ := bot.Account.Info()
-		var text string
-		for key, value := range info {
-			text += key + "=" + value + "\n"
+	adminChatId, _ := cli.AdminChat(bot, accId)
+	if msg.ChatId == adminChatId {
+		isAdmin, _ := cli.IsAdmin(bot, accId, msg.FromId)
+		if isAdmin {
+			switch msg.Text {
+			case "/info":
+				info, _ := bot.Rpc.GetInfo(accId)
+				var text string
+				for key, value := range info {
+					text += key + "=" + value + "\n"
+				}
+				bot.Rpc.MiscSendTextMessage(accId, msg.ChatId, text)
+			}
 		}
-		chat.SendText(text)
 	}
 }
 

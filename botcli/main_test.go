@@ -5,14 +5,24 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/deltachat/deltachat-rpc-client-go/acfactory"
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
+	"github.com/deltachat/deltachat-rpc-client-go/deltachat/transport"
 )
 
+var acfactory *deltachat.AcFactory
+
+func TestMain(m *testing.M) {
+	acfactory = &deltachat.AcFactory{}
+	acfactory.TearUp()
+	defer acfactory.TearDown()
+	m.Run()
+}
+
 func RunConfiguredCli(cli *BotCli, args ...string) (output string, err error) {
-	bot := acfactory.OnlineBot()
-	acfactory.StopRpc(bot)
-	dir := filepath.Dir(bot.Account.Manager.Rpc.(*deltachat.RpcIO).AccountsDir)
+	var dir string
+	acfactory.WithOnlineBot(func(bot *deltachat.Bot, accId deltachat.AccountId) {
+		dir = filepath.Dir(bot.Rpc.Transport.(*transport.IOTransport).AccountsDir)
+	})
 	args = append([]string{"-f=" + dir}, args...)
 	return runCli(cli, args...)
 }
@@ -30,18 +40,4 @@ func runCli(cli *BotCli, args ...string) (output string, err error) {
 
 	err = cli.Start()
 	return buf.String(), err
-}
-
-func TestMain(m *testing.M) {
-	cfg := map[string]string{
-		"mail_server":   "localhost",
-		"send_server":   "localhost",
-		"mail_port":     "3143",
-		"send_port":     "3025",
-		"mail_security": "3",
-		"send_security": "3",
-	}
-	acfactory.TearUp(cfg)
-	defer acfactory.TearDown()
-	m.Run()
 }
