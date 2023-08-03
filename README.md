@@ -51,7 +51,7 @@ func main() {
 		})
 	})
 	cli.OnBotStart(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		cli.Logger.Info("OnBotStart event triggered: bot started!")
+		cli.Logger.Info("OnBotStart event triggered: bot is about to start!")
 	})
 	cli.Start()
 }
