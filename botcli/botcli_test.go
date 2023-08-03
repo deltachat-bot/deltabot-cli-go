@@ -3,47 +3,37 @@ package botcli
 import (
 	"testing"
 
-	"github.com/deltachat/deltachat-rpc-client-go/acfactory"
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
+	"github.com/deltachat/deltachat-rpc-client-go/deltachat/option"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBotCli_SetConfig(t *testing.T) {
 	t.Parallel()
-	bot := acfactory.OnlineBot()
-	defer acfactory.StopRpc(bot)
-
-	cli := New("testbot")
-	assert.Nil(t, cli.SetConfig(bot, "testkey", "testing"))
-	value, err := cli.GetConfig(bot, "testkey")
-	assert.Nil(t, err)
-	assert.Equal(t, "testing", value)
+	acfactory.WithOnlineBot(func(bot *deltachat.Bot, accId deltachat.AccountId) {
+		cli := New("testbot")
+		assert.Nil(t, cli.SetConfig(bot, accId, "testkey", option.Some("testing")))
+		value, err := cli.GetConfig(bot, accId, "testkey")
+		assert.Nil(t, err)
+		assert.Equal(t, "testing", value.UnwrapOr(""))
+	})
 }
 
 func TestBotCli_AdminChat(t *testing.T) {
 	t.Parallel()
-	bot := acfactory.OnlineBot()
-	defer acfactory.StopRpc(bot)
+	acfactory.WithOnlineBot(func(bot *deltachat.Bot, accId deltachat.AccountId) {
+		cli := New("testbot")
+		chatId1, err := cli.AdminChat(bot, accId)
+		assert.Nil(t, err)
+		chatId2, err := cli.ResetAdminChat(bot, accId)
+		assert.Nil(t, err)
+		assert.NotEqual(t, chatId2, chatId1)
 
-	cli := New("testbot")
-	chat1, err := cli.AdminChat(bot)
-	assert.Nil(t, err)
-	chat2, err := cli.ResetAdminChat(bot)
-	assert.Nil(t, err)
-	assert.NotEqual(t, chat2.Id, chat1.Id)
-
-	isAdmin, err := cli.IsAdmin(bot, bot.Me())
-	assert.Nil(t, err)
-	assert.True(t, isAdmin)
-
-	acfactory.StopRpc(bot)
-	_, err = cli.AdminChat(bot)
-	assert.NotNil(t, err)
-	_, err = cli.ResetAdminChat(bot)
-	assert.NotNil(t, err)
-	_, err = cli.IsAdmin(bot, bot.Me())
-	assert.NotNil(t, err)
+		isAdmin, err := cli.IsAdmin(bot, accId, deltachat.ContactSelf)
+		assert.Nil(t, err)
+		assert.True(t, isAdmin)
+	})
 }
 
 func TestBotCli_AddCommand(t *testing.T) {
@@ -79,22 +69,15 @@ func TestBotCli_OnBotStart(t *testing.T) {
 	cliBot.Stop()
 }
 
-func TestBotCli_OnBotInit(t *testing.T) {
+func TestBotCli_serve(t *testing.T) {
 	t.Parallel()
 	cli := New("testbot")
-	onEventInfoCalled := make(chan deltachat.Event, 1)
 	onNewMsgCalled := make(chan *deltachat.MsgSnapshot, 1)
 	var cliBot *deltachat.Bot
 	cli.OnBotInit(func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		cliBot = bot
-		bot.On(deltachat.EventInfo{}, func(bot *deltachat.Bot, event deltachat.Event) {
-			select {
-			case onEventInfoCalled <- event:
-			default:
-			}
-		})
-		bot.OnNewMsg(func(bot *deltachat.Bot, msg *deltachat.Message) {
-			snapshot, _ := msg.Snapshot()
+		bot.OnNewMsg(func(bot *deltachat.Bot, accId deltachat.AccountId, msgId deltachat.MsgId) {
+			snapshot, _ := bot.Rpc.GetMessage(accId, msgId)
 			select {
 			case onNewMsgCalled <- snapshot:
 			default:
@@ -109,70 +92,50 @@ func TestBotCli_OnBotInit(t *testing.T) {
 	}
 	defer cliBot.Stop()
 
-	user := acfactory.OnlineAccount()
-	defer acfactory.StopRpc(user)
+	acfactory.WithOnlineAccount(func(rpc *deltachat.Rpc, accId deltachat.AccountId) {
+		chatWithBot := acfactory.CreateChat(rpc, accId, cliBot.Rpc, 1)
 
-	assert.IsType(t, deltachat.EventInfo{}, <-onEventInfoCalled)
-
-	chatWithBot, err := acfactory.CreateChat(user, cliBot.Account)
-	assert.Nil(t, err)
-
-	_, err = chatWithBot.SendText("hi")
-	assert.Nil(t, err)
-	msg := <-onNewMsgCalled
-	assert.Equal(t, "hi", msg.Text)
+		_, err := rpc.MiscSendTextMessage(accId, chatWithBot, "hi")
+		assert.Nil(t, err)
+		msg := <-onNewMsgCalled
+		assert.Equal(t, "hi", msg.Text)
+	})
 }
 
 func TestInitCallback(t *testing.T) {
 	t.Parallel()
-	acc := acfactory.UnconfiguredAccount()
-	defer acfactory.StopRpc(acc)
+	acfactory.WithUnconfiguredAccount(func(rpc *deltachat.Rpc, accId deltachat.AccountId) {
+		addr, err := rpc.GetConfig(accId, "addr")
+		assert.Nil(t, err)
+		password, err := rpc.GetConfig(accId, "mail_pw")
+		assert.Nil(t, err)
+		err = rpc.SetConfig(accId, "mail_pw", option.None[string]())
+		assert.Nil(t, err)
+		configured, _ := rpc.IsConfigured(accId)
+		assert.False(t, configured)
 
-	addr, err := acc.GetConfig("addr")
-	assert.Nil(t, err)
-	err = acc.SetConfig("addr", "")
-	assert.Nil(t, err)
-	password, err := acc.GetConfig("mail_pw")
-	assert.Nil(t, err)
-	err = acc.SetConfig("mail_pw", "")
-	assert.Nil(t, err)
+		cli := New("testbot")
+		cli.OnBotInit(func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+			bot.Rpc = rpc
+		})
+		_, err = RunCli(cli, "init", addr.Unwrap(), password.Unwrap())
+		assert.Nil(t, err)
 
-	cli := New("testbot")
-	cli.OnBotInit(func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		bot.Account = acc
+		configured, _ = rpc.IsConfigured(accId)
+		assert.True(t, configured)
 	})
-
-	configured, _ := acc.IsConfigured()
-	assert.False(t, configured)
-
-	_, err = RunCli(cli, "init", addr, password)
-	assert.Nil(t, err)
-
-	configured, _ = acc.IsConfigured()
-	assert.True(t, configured)
 }
 
 func TestConfigCallback(t *testing.T) {
 	t.Parallel()
 	var err error
-	var cliBot *deltachat.Bot
 	cli := New("testbot")
-	cli.OnBotInit(func(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		cliBot = bot
-	})
 
 	_, err = RunCli(cli, "config", "addr")
 	assert.Nil(t, err)
 
 	_, err = RunCli(cli, "config", "addr", "test@example.com")
 	assert.Nil(t, err)
-
-	assert.Nil(t, cliBot.Account.Manager.Rpc.Start())
-	defer acfactory.StopRpc(cliBot)
-
-	addr, err := cliBot.GetConfig("addr")
-	assert.Nil(t, err)
-	assert.Equal(t, "test@example.com", addr)
 }
 
 func TestQrCallback(t *testing.T) {
