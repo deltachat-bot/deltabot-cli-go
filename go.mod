@@ -1,6 +1,6 @@
 module github.com/deltachat-bot/deltabot-cli-go
 
-go 1.19
+go 1.21
 
 require (
 	github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230825233829-24baa9b81c67
