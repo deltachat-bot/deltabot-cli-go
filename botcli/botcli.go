@@ -144,16 +144,9 @@ func (self *BotCli) AdminChat(bot *deltachat.Bot, accId deltachat.AccountId) (de
 			return 0, err
 		}
 		chatId = deltachat.ChatId(chatIdInt)
-		var selfInGroup bool
-		contacts, err := bot.Rpc.GetChatContacts(accId, chatId)
+		selfInGroup, err := bot.Rpc.CanSend(accId, chatId)
 		if err != nil {
 			return 0, err
-		}
-		for _, contactId := range contacts {
-			if contactId == deltachat.ContactSelf {
-				selfInGroup = true
-				break
-			}
 		}
 		if !selfInGroup {
 			value = option.None[string]()
