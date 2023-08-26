@@ -81,13 +81,13 @@ func (self *BotCli) Start() error {
 
 		bot := deltachat.NewBot(rpc)
 		bot.On(deltachat.EventInfo{}, func(bot *deltachat.Bot, accId deltachat.AccountId, event deltachat.Event) {
-			self.Logger.Infof("[acc=%v] %v", accId, event.(deltachat.EventInfo).Msg)
+			self.GetLogger(accId).Info(event.(deltachat.EventInfo).Msg)
 		})
 		bot.On(deltachat.EventWarning{}, func(bot *deltachat.Bot, accId deltachat.AccountId, event deltachat.Event) {
-			self.Logger.Warnf("[acc=%v] %v", accId, event.(deltachat.EventWarning).Msg)
+			self.GetLogger(accId).Warn(event.(deltachat.EventWarning).Msg)
 		})
 		bot.On(deltachat.EventError{}, func(bot *deltachat.Bot, accId deltachat.AccountId, event deltachat.Event) {
-			self.Logger.Errorf("[acc=%v] %v", accId, event.(deltachat.EventError).Msg)
+			self.GetLogger(accId).Error(event.(deltachat.EventError).Msg)
 		})
 		if self.onInit != nil {
 			self.onInit(self, bot, self.parsedCmd.cmd, self.parsedCmd.args)
@@ -97,6 +97,11 @@ func (self *BotCli) Start() error {
 	}
 
 	return nil
+}
+
+// Get a logger for the given account.
+func (self *BotCli) GetLogger(accId deltachat.AccountId) *zap.SugaredLogger {
+	return self.Logger.With("acc", accId)
 }
 
 // Add a subcommand to the CLI. The given callback will be executed when the command is used.
