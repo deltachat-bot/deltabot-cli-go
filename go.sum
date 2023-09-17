@@ -19,6 +19,8 @@ github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230803004831-c41345b8ff
 github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230803004831-c41345b8ffd8/go.mod h1:2ISiMA742xpBiTP+KOLiTSNfZdKZChh6cnuvA10sqkA=
 github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230825233829-24baa9b81c67 h1:YWmtYP75pdSV9/HAk7799QUJd6XGxq9lK6GRdw/Ppho=
 github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230825233829-24baa9b81c67/go.mod h1:2ISiMA742xpBiTP+KOLiTSNfZdKZChh6cnuvA10sqkA=
+github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230829053314-3aca819c8a98 h1:Yh4cKerw6LXMZCDZ8dEIfTeJwrsmle4BxCrkd4i1dX8=
+github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230829053314-3aca819c8a98/go.mod h1:BAmhQofUS1dJltema3k1ACBMqw7lZCpm399P4ZX4IhY=
 github.com/fortytw2/leaktest v1.3.0 h1:u8491cBMTQ8ft8aeV+adlcytMZylmA5nnwwkRZjI8vw=
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/inconshreveable/mousetrap v1.0.1 h1:U3uMjPSQEBMNp1lFxmllqCPM6P5u/Xq7Pgzkat/bFNc=
