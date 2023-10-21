@@ -79,6 +79,12 @@ func (self *BotCli) Start() error {
 			self.Logger.Panicf("Failed to start RPC server, read https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server for installation instructions. Error message: %v", err)
 		}
 
+		info, err := rpc.GetSystemInfo()
+		if err != nil {
+			self.Logger.Panic(err)
+		}
+		self.Logger.Infof("Running deltachat core %v", info["deltachat_core_version"])
+
 		bot := deltachat.NewBot(rpc)
 		bot.On(deltachat.EventInfo{}, func(bot *deltachat.Bot, accId deltachat.AccountId, event deltachat.Event) {
 			self.GetLogger(accId).Info(event.(deltachat.EventInfo).Msg)
