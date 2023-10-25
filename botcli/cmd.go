@@ -132,6 +132,10 @@ func configCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []
 		configForAcc(cli, bot, cmd, args, accId)
 		fmt.Println("")
 	}
+
+	if len(accounts) == 0 {
+		cli.Logger.Errorf("There are no accounts yet, add a new account using the init subcommand")
+	}
 }
 
 func configForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string, accId deltachat.AccountId) {
@@ -187,6 +191,8 @@ func serveCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []s
 			cli.onStart(cli, bot, cmd, args)
 		}
 		bot.Run() //nolint:errcheck
+	} else {
+		cli.Logger.Errorf("There are no configured accounts to serve")
 	}
 }
 
@@ -215,6 +221,10 @@ func qrCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []stri
 		qrForAcc(cli, bot, cmd, args, accId, addr)
 		fmt.Println("")
 	}
+
+	if len(accounts) == 0 {
+		cli.Logger.Errorf("There are no accounts yet, add a new account using the init subcommand")
+	}
 }
 
 func qrForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string, accId deltachat.AccountId, addr string) {
@@ -238,6 +248,9 @@ func adminCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []s
 	var accounts []deltachat.AccountId
 	if cli.SelectedAddr == "" { // for all accounts
 		accounts, err = bot.Rpc.GetAllAccountIds()
+		if err == nil && len(accounts) == 0 {
+			cli.Logger.Errorf("There are no accounts yet, add a new account using the init subcommand")
+		}
 	} else {
 		var accId deltachat.AccountId
 		accId, err = cli.GetAccount(bot.Rpc, cli.SelectedAddr)
@@ -326,6 +339,9 @@ func removeCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []
 	var accounts []deltachat.AccountId
 	if cli.SelectedAddr == "" { // for all accounts
 		accounts, err = bot.Rpc.GetAllAccountIds()
+		if err == nil && len(accounts) == 0 {
+			cli.Logger.Errorf("There are no accounts yet, add a new account using the init subcommand")
+		}
 	} else {
 		var accId deltachat.AccountId
 		accId, err = cli.GetAccount(bot.Rpc, cli.SelectedAddr)
@@ -333,6 +349,11 @@ func removeCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []
 	}
 	if err != nil {
 		cli.Logger.Error(err)
+		return
+	}
+
+	if len(accounts) > 1 {
+		cli.Logger.Error("There are more than one account, to remove one of them, pass the account address with -a/--account option")
 		return
 	}
 
