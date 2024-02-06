@@ -3,9 +3,16 @@ package botcli
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mdp/qrterminal/v3"
 )
+
+// Generate an invite link (https://i.delta.chat) for the given invitation-QR data
+func GenerateInviteLink(qrdata string) string {
+	fragment := strings.Replace(strings.SplitN(qrdata, ":", 2)[1], "#", "&", 1)
+	return "https://i.delta.chat/#" + fragment
+}
 
 func getDefaultAppDir(appName string) string {
 	cfgDir, _ := os.UserConfigDir()

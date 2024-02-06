@@ -238,7 +238,7 @@ func qrForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string
 		invert, _ := cmd.Flags().GetBool("invert")
 		printQr(qrdata, invert)
 		fragment := strings.Replace(strings.SplitN(qrdata, ":", 2)[1], "#", "&", 1)
-		fmt.Printf("https://i.delta.chat/#%v\n", fragment)
+		fmt.Printf(GenerateInviteLink(qrdata))
 	} else {
 		cli.Logger.Error("account not configured")
 	}
