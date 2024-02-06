@@ -306,7 +306,7 @@ func adminForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []str
 	fmt.Println("Scan this QR to become bot administrator")
 	invert, _ := cmd.Flags().GetBool("invert")
 	printQr(qrdata, invert)
-	fmt.Println(qrdata)
+	fmt.Println(GenerateInviteLink(qrdata))
 }
 
 func listCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
