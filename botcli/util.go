@@ -3,7 +3,6 @@ package botcli
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/mdp/qrterminal/v3"
 )
