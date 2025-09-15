@@ -50,19 +50,17 @@ func initializeRootCmd(cli *BotCli) {
 	cli.AddCommand(serveCmd, serveCallback)
 
 	qrCmd := &cobra.Command{
-		Use:   "qr",
-		Short: "get bot's verification QR",
+		Use:   "link",
+		Short: "print the bot's chat invitation link",
 		Args:  cobra.ExactArgs(0),
 	}
-	qrCmd.Flags().BoolP("invert", "i", false, "invert QR colors")
 	cli.AddCommand(qrCmd, qrCallback)
 
 	adminCmd := &cobra.Command{
 		Use:   "admin",
-		Short: "get the invitation QR to the bot administration group, WARNING: don't share this QR",
+		Short: "get the invitation link to the bot administration group, WARNING: don't share this",
 		Args:  cobra.ExactArgs(0),
 	}
-	adminCmd.Flags().BoolP("invert", "i", false, "invert QR colors")
 	adminCmd.Flags().BoolP("reset", "r", false, "reset admin chat, removes all existing admins")
 	cli.AddCommand(adminCmd, adminCallback)
 }
@@ -229,14 +227,11 @@ func qrCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []stri
 
 func qrForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string, accId deltachat.AccountId, addr string) {
 	if isConf, _ := bot.Rpc.IsConfigured(accId); isConf {
-		qrdata, _, err := bot.Rpc.GetChatSecurejoinQrCodeSvg(accId, option.None[deltachat.ChatId]())
+		qrdata, err := bot.Rpc.GetChatSecurejoinQrCode(accId, option.None[deltachat.ChatId]())
 		if err != nil {
-			cli.Logger.Errorf("Failed to generate QR: %v", err)
+			cli.Logger.Errorf("Failed to generate invite link: %v", err)
 			return
 		}
-		fmt.Println("Scan this QR to verify", addr)
-		invert, _ := cmd.Flags().GetBool("invert")
-		printQr(qrdata, invert)
 		fmt.Println(qrdata)
 	} else {
 		cli.Logger.Error("account not configured")
@@ -297,15 +292,13 @@ func adminForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []str
 		return
 	}
 
-	qrdata, _, err := bot.Rpc.GetChatSecurejoinQrCodeSvg(accId, option.Some(chatId))
+	qrdata, err := bot.Rpc.GetChatSecurejoinQrCode(accId, option.Some(chatId))
 	if err != nil {
 		cli.Logger.Errorf(errMsg, err)
 		return
 	}
 
-	fmt.Println("Scan this QR to become bot administrator")
-	invert, _ := cmd.Flags().GetBool("invert")
-	printQr(qrdata, invert)
+	fmt.Println("Use this invite link to become bot administrator")
 	fmt.Println(qrdata)
 }
 

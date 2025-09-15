@@ -136,13 +136,10 @@ func TestQrCallback(t *testing.T) {
 	t.Parallel()
 	var err error
 	cli := New("testbot")
-	_, err = RunCli(cli, "qr")
+	_, err = RunCli(cli, "link")
 	assert.Nil(t, err)
 
-	_, err = RunConfiguredCli(cli, "qr")
-	assert.Nil(t, err)
-
-	_, err = RunConfiguredCli(cli, "qr", "-i")
+	_, err = RunConfiguredCli(cli, "link")
 	assert.Nil(t, err)
 }
 
@@ -154,9 +151,6 @@ func TestAdminCallback(t *testing.T) {
 	assert.Nil(t, err)
 
 	_, err = RunConfiguredCli(cli, "admin")
-	assert.Nil(t, err)
-
-	_, err = RunConfiguredCli(cli, "admin", "-i")
 	assert.Nil(t, err)
 
 	_, err = RunConfiguredCli(cli, "admin", "-r")
