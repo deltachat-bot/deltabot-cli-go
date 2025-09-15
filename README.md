@@ -8,8 +8,9 @@
 
 Library to speedup Delta Chat bot development in Golang.
 
-With this library you can focus on writing your event/message processing logic and let us handle the
-repetitive process of creating the bot CLI.
+With this library you can focus on writing your event/message
+processing logic and let us handle the repetitive process of
+creating the bot CLI.
 
 ## Install
 
@@ -21,7 +22,7 @@ go get -u github.com/deltachat-bot/deltabot-cli-go
 
 This package depends on a standalone Delta Chat RPC server `deltachat-rpc-server` program that must be
 available in your `PATH`. For installation instructions check:
-https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server
+https://github.com/chatmail/core/tree/main/deltachat-rpc-server
 
 ## Usage
 
