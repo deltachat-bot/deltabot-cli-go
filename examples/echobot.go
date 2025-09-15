@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/deltachat-bot/deltabot-cli-go/botcli"
 	"github.com/chatmail/rpc-client-go/deltachat"
+	"github.com/deltachat-bot/deltabot-cli-go/botcli"
 	"github.com/spf13/cobra"
 )
 
