@@ -61,10 +61,7 @@ func TestBotCli_OnBotStart(t *testing.T) {
 		cliBot = bot
 	})
 	go RunConfiguredCli(cli, "serve") //nolint:errcheck
-	for {
-		if cliBot != nil && cliBot.IsRunning() {
-			break
-		}
+	for cliBot == nil || !cliBot.IsRunning() {
 	}
 	cliBot.Stop()
 }
@@ -85,10 +82,7 @@ func TestBotCli_serve(t *testing.T) {
 		})
 	})
 	go RunConfiguredCli(cli, "serve") //nolint:errcheck
-	for {
-		if cliBot != nil && cliBot.IsRunning() {
-			break
-		}
+	for cliBot == nil || !cliBot.IsRunning() {
 	}
 	defer cliBot.Stop()
 

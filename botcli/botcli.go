@@ -48,101 +48,101 @@ func New(appName string) *BotCli {
 }
 
 // Register function to be called when the bot is initialized.
-func (self *BotCli) OnBotInit(callback Callback) {
-	self.onInit = callback
+func (botcli *BotCli) OnBotInit(callback Callback) {
+	botcli.onInit = callback
 }
 
 // Register function to be called if the bot is about to start serving requests.
-func (self *BotCli) OnBotStart(callback Callback) {
-	self.onStart = callback
+func (botcli *BotCli) OnBotStart(callback Callback) {
+	botcli.onStart = callback
 }
 
 // Run the CLI program.
-func (self *BotCli) Start() error {
-	defer self.Logger.Sync() //nolint:errcheck
-	err := self.RootCmd.Execute()
+func (botcli *BotCli) Start() error {
+	defer botcli.Logger.Sync() //nolint:errcheck
+	err := botcli.RootCmd.Execute()
 	if err != nil {
 		return err
 	}
 
-	if self.parsedCmd != nil {
-		err = os.MkdirAll(self.AppDir, os.ModePerm)
+	if botcli.parsedCmd != nil {
+		err = os.MkdirAll(botcli.AppDir, os.ModePerm)
 		if err != nil {
 			return err
 		}
 
 		trans := transport.NewIOTransport()
-		trans.AccountsDir = getAccountsDir(self.AppDir)
+		trans.AccountsDir = getAccountsDir(botcli.AppDir)
 		rpc := &deltachat.Rpc{Context: context.Background(), Transport: trans}
 		defer trans.Close()
 		if err := trans.Open(); err != nil {
-			self.Logger.Panicf("Failed to start RPC server, read https://github.com/chatmail/core/tree/master/deltachat-rpc-server for installation instructions. Error message: %v", err)
+			botcli.Logger.Panicf("Failed to start RPC server, read https://github.com/chatmail/core/tree/master/deltachat-rpc-server for installation instructions. Error message: %v", err)
 		}
 
 		info, err := rpc.GetSystemInfo()
 		if err != nil {
-			self.Logger.Panic(err)
+			botcli.Logger.Panic(err)
 		}
-		self.Logger.Infof("Running deltachat core %v", info["deltachat_core_version"])
+		botcli.Logger.Infof("Running deltachat core %v", info["deltachat_core_version"])
 
 		bot := deltachat.NewBot(rpc)
 		bot.On(deltachat.EventInfo{}, func(bot *deltachat.Bot, accId deltachat.AccountId, event deltachat.Event) {
-			self.GetLogger(accId).Info(event.(deltachat.EventInfo).Msg)
+			botcli.GetLogger(accId).Info(event.(deltachat.EventInfo).Msg)
 		})
 		bot.On(deltachat.EventWarning{}, func(bot *deltachat.Bot, accId deltachat.AccountId, event deltachat.Event) {
-			self.GetLogger(accId).Warn(event.(deltachat.EventWarning).Msg)
+			botcli.GetLogger(accId).Warn(event.(deltachat.EventWarning).Msg)
 		})
 		bot.On(deltachat.EventError{}, func(bot *deltachat.Bot, accId deltachat.AccountId, event deltachat.Event) {
-			self.GetLogger(accId).Error(event.(deltachat.EventError).Msg)
+			botcli.GetLogger(accId).Error(event.(deltachat.EventError).Msg)
 		})
-		if self.onInit != nil {
-			self.onInit(self, bot, self.parsedCmd.cmd, self.parsedCmd.args)
+		if botcli.onInit != nil {
+			botcli.onInit(botcli, bot, botcli.parsedCmd.cmd, botcli.parsedCmd.args)
 		}
-		callback := self.cmdsMap[self.parsedCmd.cmd.Use]
-		callback(self, bot, self.parsedCmd.cmd, self.parsedCmd.args)
+		callback := botcli.cmdsMap[botcli.parsedCmd.cmd.Use]
+		callback(botcli, bot, botcli.parsedCmd.cmd, botcli.parsedCmd.args)
 	}
 
 	return nil
 }
 
 // Get a logger for the given account.
-func (self *BotCli) GetLogger(accId deltachat.AccountId) *zap.SugaredLogger {
-	return self.Logger.With("acc", accId)
+func (botcli *BotCli) GetLogger(accId deltachat.AccountId) *zap.SugaredLogger {
+	return botcli.Logger.With("acc", accId)
 }
 
 // Add a subcommand to the CLI. The given callback will be executed when the command is used.
-func (self *BotCli) AddCommand(cmd *cobra.Command, callback Callback) {
+func (botcli *BotCli) AddCommand(cmd *cobra.Command, callback Callback) {
 	if cmd.Run != nil {
 		panic("Can not set cmd.Run property, it would be overriden")
 	}
 	cmd.Run = func(cmd *cobra.Command, args []string) {
-		self.parsedCmd = &_ParsedCmd{cmd, args}
+		botcli.parsedCmd = &_ParsedCmd{cmd, args}
 	}
-	self.RootCmd.AddCommand(cmd)
-	self.cmdsMap[cmd.Use] = callback
+	botcli.RootCmd.AddCommand(cmd)
+	botcli.cmdsMap[cmd.Use] = callback
 }
 
 // Store a custom program setting in the given bot. The setting is specific to your application.
 //
 // The setting is stored using Bot.SetUiConfig() and the key is prefixed with BotCli.AppName.
-func (self *BotCli) SetConfig(bot *deltachat.Bot, accId deltachat.AccountId, key string, value option.Option[string]) error {
-	return bot.SetUiConfig(accId, self.AppName+"."+key, value)
+func (botcli *BotCli) SetConfig(bot *deltachat.Bot, accId deltachat.AccountId, key string, value option.Option[string]) error {
+	return bot.SetUiConfig(accId, botcli.AppName+"."+key, value)
 }
 
 // Get a custom program setting from the given bot. The setting is specific to your application.
 //
 // The setting is retrieved using Bot.GetUiConfig() and the key is prefixed with BotCli.AppName.
-func (self *BotCli) GetConfig(bot *deltachat.Bot, accId deltachat.AccountId, key string) (option.Option[string], error) {
-	return bot.GetUiConfig(accId, self.AppName+"."+key)
+func (botcli *BotCli) GetConfig(bot *deltachat.Bot, accId deltachat.AccountId, key string) (option.Option[string], error) {
+	return bot.GetUiConfig(accId, botcli.AppName+"."+key)
 }
 
 // Get the group of bot administrators.
-func (self *BotCli) AdminChat(bot *deltachat.Bot, accId deltachat.AccountId) (deltachat.ChatId, error) {
+func (botcli *BotCli) AdminChat(bot *deltachat.Bot, accId deltachat.AccountId) (deltachat.ChatId, error) {
 	if isConf, _ := bot.Rpc.IsConfigured(accId); !isConf {
 		return 0, &BotNotConfiguredErr{}
 	}
 
-	value, err := self.GetConfig(bot, accId, "admin-chat")
+	value, err := botcli.GetConfig(bot, accId, "admin-chat")
 	if err != nil {
 		return 0, err
 	}
@@ -165,7 +165,7 @@ func (self *BotCli) AdminChat(bot *deltachat.Bot, accId deltachat.AccountId) (de
 	}
 
 	if value.IsNone() {
-		chatId, err = self.ResetAdminChat(bot, accId)
+		chatId, err = botcli.ResetAdminChat(bot, accId)
 		if err != nil {
 			return 0, err
 		}
@@ -175,7 +175,7 @@ func (self *BotCli) AdminChat(bot *deltachat.Bot, accId deltachat.AccountId) (de
 }
 
 // Reset the group of bot administrators, all the members of the old group are no longer admins.
-func (self *BotCli) ResetAdminChat(bot *deltachat.Bot, accId deltachat.AccountId) (deltachat.ChatId, error) {
+func (botcli *BotCli) ResetAdminChat(bot *deltachat.Bot, accId deltachat.AccountId) (deltachat.ChatId, error) {
 	if isConf, _ := bot.Rpc.IsConfigured(accId); !isConf {
 		return 0, &BotNotConfiguredErr{}
 	}
@@ -185,7 +185,7 @@ func (self *BotCli) ResetAdminChat(bot *deltachat.Bot, accId deltachat.AccountId
 		return 0, err
 	}
 	value := strconv.FormatUint(uint64(chatId), 10)
-	err = self.SetConfig(bot, accId, "admin-chat", option.Some(value))
+	err = botcli.SetConfig(bot, accId, "admin-chat", option.Some(value))
 	if err != nil {
 		return 0, err
 	}
@@ -194,8 +194,8 @@ func (self *BotCli) ResetAdminChat(bot *deltachat.Bot, accId deltachat.AccountId
 }
 
 // Returns true if contact is in the bot administrators group, false otherwise.
-func (self *BotCli) IsAdmin(bot *deltachat.Bot, accId deltachat.AccountId, contactId deltachat.ContactId) (bool, error) {
-	chatId, err := self.AdminChat(bot, accId)
+func (botcli *BotCli) IsAdmin(bot *deltachat.Bot, accId deltachat.AccountId, contactId deltachat.ContactId) (bool, error) {
+	chatId, err := botcli.AdminChat(bot, accId)
 	if err != nil {
 		return false, err
 	}
@@ -213,8 +213,8 @@ func (self *BotCli) IsAdmin(bot *deltachat.Bot, accId deltachat.AccountId, conta
 }
 
 // Get account for address, if no account exists create a new one
-func (self *BotCli) GetOrCreateAccount(rpc *deltachat.Rpc, addr string) (deltachat.AccountId, error) {
-	accId, err := self.GetAccount(rpc, addr)
+func (botcli *BotCli) GetOrCreateAccount(rpc *deltachat.Rpc, addr string) (deltachat.AccountId, error) {
+	accId, err := botcli.GetAccount(rpc, addr)
 	if err != nil {
 		accId, err = rpc.AddAccount()
 		if err != nil {
@@ -226,7 +226,7 @@ func (self *BotCli) GetOrCreateAccount(rpc *deltachat.Rpc, addr string) (deltach
 }
 
 // Get account for address, if no account exists with the given address, an error is returned
-func (self *BotCli) GetAccount(rpc *deltachat.Rpc, addr string) (deltachat.AccountId, error) {
+func (botcli *BotCli) GetAccount(rpc *deltachat.Rpc, addr string) (deltachat.AccountId, error) {
 	chatIdInt, err := strconv.ParseUint(addr, 10, 0)
 	if err == nil {
 		return deltachat.AccountId(chatIdInt), nil
@@ -234,7 +234,7 @@ func (self *BotCli) GetAccount(rpc *deltachat.Rpc, addr string) (deltachat.Accou
 
 	accounts, _ := rpc.GetAllAccountIds()
 	for _, accId := range accounts {
-		addr2, _ := self.GetAddress(rpc, accId)
+		addr2, _ := botcli.GetAddress(rpc, accId)
 		if addr == addr2 {
 			return accId, nil
 		}
@@ -243,7 +243,7 @@ func (self *BotCli) GetAccount(rpc *deltachat.Rpc, addr string) (deltachat.Accou
 }
 
 // Get the address of the given account
-func (self *BotCli) GetAddress(rpc *deltachat.Rpc, accId deltachat.AccountId) (string, error) {
+func (botcli *BotCli) GetAddress(rpc *deltachat.Rpc, accId deltachat.AccountId) (string, error) {
 	var addr option.Option[string]
 	var err error
 	isConf, err := rpc.IsConfigured(accId)
