@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
-	"github.com/deltachat/deltachat-rpc-client-go/deltachat/transport"
+	"github.com/chatmail/rpc-client-go/deltachat"
+	"github.com/chatmail/rpc-client-go/deltachat/transport"
 )
 
 var acfactory *deltachat.AcFactory

@@ -1,9 +1,9 @@
 module github.com/deltachat-bot/deltabot-cli-go
 
-go 1.21
+go 1.25
 
 require (
-	github.com/deltachat/deltachat-rpc-client-go v1.134.0
+	github.com/chatmail/rpc-client-go v1.2.14
 	github.com/mdp/qrterminal/v3 v3.2.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.2

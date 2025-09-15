@@ -3,8 +3,8 @@ package botcli
 import (
 	"testing"
 
-	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
-	"github.com/deltachat/deltachat-rpc-client-go/deltachat/option"
+	"github.com/chatmail/rpc-client-go/deltachat"
+	"github.com/chatmail/rpc-client-go/deltachat/option"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )

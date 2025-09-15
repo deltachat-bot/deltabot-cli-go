@@ -1,3 +1,5 @@
+github.com/chatmail/rpc-client-go v1.2.14 h1:goDKKYMLcVxwZm3cbe5WPVJ0Chi6E2jJ2uhQlEyYlZ8=
+github.com/chatmail/rpc-client-go v1.2.14/go.mod h1:bBX+syYUeyuaGd5VQCjTtbj9q4V29xnHPjkBr6rzG2A=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/creachadair/jrpc2 v1.1.2 h1:UOYMipEFYlwd5qmcvs9GZBurn3oXt1UDIX5JLjWWFzo=
 github.com/creachadair/jrpc2 v1.1.2/go.mod h1:JcCe2Eny3lIvVwZLm92WXyU+tNUgTBWFCLMsfNkjEGk=
@@ -6,8 +8,6 @@ github.com/creachadair/mds v0.8.2/go.mod h1:4vrFYUzTXMJpMBU+OA292I6IUxKWCCfZkgXg
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/deltachat/deltachat-rpc-client-go v1.134.0 h1:rpGa/kL417ufyxsivT/G751aZifh8bpiPTIsXMzdDAI=
-github.com/deltachat/deltachat-rpc-client-go v1.134.0/go.mod h1:Ctd0M0o87y2B0QSOn8QN6IMDWjHD7XzDKsjNMYwP208=
 github.com/fortytw2/leaktest v1.3.0 h1:u8491cBMTQ8ft8aeV+adlcytMZylmA5nnwwkRZjI8vw=
 github.com/fortytw2/leaktest v1.3.0/go.mod h1:jDsjWgpAGjm2CA7WthBh/CdZYEPF31XHquHwclZch5g=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=

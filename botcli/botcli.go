@@ -5,9 +5,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
-	"github.com/deltachat/deltachat-rpc-client-go/deltachat/option"
-	"github.com/deltachat/deltachat-rpc-client-go/deltachat/transport"
+	"github.com/chatmail/rpc-client-go/deltachat"
+	"github.com/chatmail/rpc-client-go/deltachat/option"
+	"github.com/chatmail/rpc-client-go/deltachat/transport"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -76,7 +76,7 @@ func (self *BotCli) Start() error {
 		rpc := &deltachat.Rpc{Context: context.Background(), Transport: trans}
 		defer trans.Close()
 		if err := trans.Open(); err != nil {
-			self.Logger.Panicf("Failed to start RPC server, read https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server for installation instructions. Error message: %v", err)
+			self.Logger.Panicf("Failed to start RPC server, read https://github.com/chatmail/core/tree/master/deltachat-rpc-server for installation instructions. Error message: %v", err)
 		}
 
 		info, err := rpc.GetSystemInfo()

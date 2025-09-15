@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## v1.2.14
 
 ## Changed
 
+- breaking: update `github.com/chatmail/rpc-client-go` to `v1.2.14`
 - breaking: modified `Callback` type to accept an additional `*BotCli` parameter
 - updated to breaking changes in `deltachat-rpc-client-go v0.17.1-0.20230417222922-fd102c51053c`
 
