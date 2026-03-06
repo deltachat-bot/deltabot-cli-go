@@ -4,20 +4,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/chatmail/rpc-client-go/deltachat"
-	"github.com/chatmail/rpc-client-go/deltachat/option"
+	"github.com/chatmail/rpc-client-go/v2/deltachat"
 	"github.com/spf13/cobra"
 )
 
 func initializeRootCmd(cli *BotCli) {
 	defDir := getDefaultAppDir(cli.AppName)
 	cli.RootCmd.PersistentFlags().StringVarP(&cli.AppDir, "folder", "f", defDir, "program's data folder")
-	cli.RootCmd.PersistentFlags().StringVarP(&cli.SelectedAddr, "account", "a", "", "operate over this account only when running any subcommand")
+	cli.RootCmd.PersistentFlags().Uint32VarP(&cli.SelectedAccount, "account", "a", 0, "operate over this account ID only when running any subcommand")
 
 	initCmd := &cobra.Command{
 		Use:   "init",
-		Short: "do initial login configuration of a new Delta Chat account, if the account already exist, the credentials are updated",
-		Args:  cobra.ExactArgs(2),
+		Short: "do initial login configuration of a new Delta Chat account. If only one argument is given it must be a configuration URI (ex. dcaccount:)",
+		Args:  cobra.RangeArgs(1, 2),
 	}
 	cli.AddCommand(initCmd, initCallback)
 
@@ -66,39 +65,40 @@ func initializeRootCmd(cli *BotCli) {
 }
 
 func initCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-	bot.On(deltachat.EventConfigureProgress{}, func(bot *deltachat.Bot, accId deltachat.AccountId, event deltachat.Event) {
-		ev := event.(deltachat.EventConfigureProgress)
-		addr, _ := cli.GetAddress(bot.Rpc, accId)
-		if addr == "" {
-			addr = fmt.Sprintf("account #%v", accId)
-		}
-		cli.Logger.Infof("[%v] Configuration progress: %v", addr, ev.Progress)
+	bot.On(&deltachat.EventTypeConfigureProgress{}, func(bot *deltachat.Bot, accId uint32, event deltachat.EventType) {
+		ev := event.(*deltachat.EventTypeConfigureProgress)
+		cli.Logger.Infof("[account #%v] Configuration progress: %v", accId, ev.Progress)
 	})
 
-	var accId deltachat.AccountId
+	var accId uint32
 	var err error
-	if cli.SelectedAddr == "" { // auto-select based on first argument (or create a new one if not found)
-		accId, err = cli.GetOrCreateAccount(bot.Rpc, args[0])
-	} else { // re-configure the selected account
-		accId, err = cli.GetAccount(bot.Rpc, cli.SelectedAddr)
-		if err == nil {
-			_, err = cli.GetAccount(bot.Rpc, args[0])
-			if err == nil {
-				cli.Logger.Errorf("Configuration failed: an account with address %q already exists", args[0])
-				return
-			}
-		}
+	if cli.SelectedAccount == 0 { // create a new account
+		accId, err = bot.Rpc.AddAccount()
+	} else { // add relay to the selected account
+		accId = cli.SelectedAccount
 	}
+
+	if err == nil {
+		botFlag := "1"
+		err = bot.Rpc.SetConfig(accId, "bot", &botFlag)
+	}
+
 	if err != nil {
 		cli.Logger.Errorf("Configuration failed: %v", err)
 		return
 	}
 
 	go func() {
-		if err := bot.Configure(accId, args[0], args[1]); err != nil {
+		if len(args) == 2 {
+			params := deltachat.EnteredLoginParam{Addr: args[0], Password: args[1]}
+			err = bot.Rpc.AddOrUpdateTransport(accId, params)
+		} else {
+			err = bot.Rpc.AddTransportFromQr(accId, args[0])
+		}
+		if err != nil {
 			cli.Logger.Errorf("Configuration failed: %v", err)
 		} else {
-			cli.Logger.Infof("Account %q configured successfully.", args[0])
+			cli.Logger.Infof("Account configured successfully.")
 		}
 		bot.Stop()
 	}()
@@ -107,13 +107,11 @@ func initCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []st
 
 func configCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	var err error
-	var accounts []deltachat.AccountId
-	if cli.SelectedAddr == "" { // set config for all accounts
+	var accounts []uint32
+	if cli.SelectedAccount == 0 { // set config for all accounts
 		accounts, err = bot.Rpc.GetAllAccountIds()
 	} else {
-		var accId deltachat.AccountId
-		accId, err = cli.GetAccount(bot.Rpc, cli.SelectedAddr)
-		accounts = []deltachat.AccountId{accId}
+		accounts = []uint32{cli.SelectedAccount}
 	}
 	if err != nil {
 		cli.Logger.Error(err)
@@ -121,12 +119,7 @@ func configCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []
 	}
 
 	for _, accId := range accounts {
-		addr, err := cli.GetAddress(bot.Rpc, accId)
-		if err != nil {
-			cli.Logger.Error(err)
-			continue
-		}
-		fmt.Printf("Account #%v (%v):\n", accId, addr)
+		fmt.Printf("Account #%v:\n", accId)
 		configForAcc(cli, bot, cmd, args, accId)
 		fmt.Println("")
 	}
@@ -136,33 +129,41 @@ func configCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []
 	}
 }
 
-func configForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string, accId deltachat.AccountId) {
+func configForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string, accId uint32) {
 	if len(args) == 0 {
 		keys, _ := bot.Rpc.GetConfig(accId, "sys.config_keys")
-		for _, key := range strings.Fields(keys.Unwrap()) {
+		for _, key := range strings.Fields(*keys) {
 			val, _ := bot.Rpc.GetConfig(accId, key)
-			fmt.Printf("%v=%q\n", key, val.UnwrapOr(""))
+			var strval string
+			if val != nil {
+				strval = *val
+			}
+			fmt.Printf("%v=%q\n", key, strval)
 		}
 		return
 	}
 
-	var val option.Option[string]
+	var val *string
 	var err error
 	if len(args) == 2 {
-		err = bot.Rpc.SetConfig(accId, args[0], option.Some(args[1]))
+		err = bot.Rpc.SetConfig(accId, args[0], &args[1])
 	}
 	if err == nil {
 		val, err = bot.Rpc.GetConfig(accId, args[0])
 	}
 	if err == nil {
-		fmt.Printf("%v=%v\n", args[0], val.UnwrapOr(""))
+		var strval string
+		if val != nil {
+			strval = *val
+		}
+		fmt.Printf("%v=%v\n", args[0], strval)
 	} else {
 		cli.Logger.Error(err)
 	}
 }
 
 func serveCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-	if cli.SelectedAddr != "" {
+	if cli.SelectedAccount != 0 {
 		cli.Logger.Errorf("operation not supported for a single account, discard the -a/--account option and try again")
 		return
 	}
@@ -172,19 +173,17 @@ func serveCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []s
 		cli.Logger.Error(err)
 		return
 	}
-	var addrs []string
+	var inviteLinks []string
 	for _, accId := range accounts {
 		if isConf, _ := bot.Rpc.IsConfigured(accId); !isConf {
 			cli.Logger.Errorf("account #%v not configured", accId)
 		} else {
-			addr, _ := bot.Rpc.GetConfig(accId, "configured_addr")
-			if addr.UnwrapOr("") != "" {
-				addrs = append(addrs, addr.Unwrap())
-			}
+			inviteLink, _ := bot.Rpc.GetChatSecurejoinQrCode(accId, nil)
+			inviteLinks = append(inviteLinks, inviteLink)
 		}
 	}
-	if len(addrs) != 0 {
-		cli.Logger.Infof("Listening at: %v", strings.Join(addrs, ", "))
+	if len(inviteLinks) != 0 {
+		cli.Logger.Infof("Listening at: %v", strings.Join(inviteLinks, "\n"))
 		if cli.onStart != nil {
 			cli.onStart(cli, bot, cmd, args)
 		}
@@ -196,13 +195,11 @@ func serveCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []s
 
 func qrCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	var err error
-	var accounts []deltachat.AccountId
-	if cli.SelectedAddr == "" { // for all accounts
+	var accounts []uint32
+	if cli.SelectedAccount == 0 { // for all accounts
 		accounts, err = bot.Rpc.GetAllAccountIds()
 	} else {
-		var accId deltachat.AccountId
-		accId, err = cli.GetAccount(bot.Rpc, cli.SelectedAddr)
-		accounts = []deltachat.AccountId{accId}
+		accounts = []uint32{cli.SelectedAccount}
 	}
 	if err != nil {
 		cli.Logger.Error(err)
@@ -210,13 +207,8 @@ func qrCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []stri
 	}
 
 	for _, accId := range accounts {
-		addr, err := cli.GetAddress(bot.Rpc, accId)
-		if err != nil {
-			cli.Logger.Error(err)
-			continue
-		}
-		fmt.Printf("Account #%v (%v):\n", accId, addr)
-		qrForAcc(cli, bot, cmd, args, accId, addr)
+		fmt.Printf("Account #%v:\n", accId)
+		qrForAcc(cli, bot, cmd, args, accId)
 		fmt.Println("")
 	}
 
@@ -225,9 +217,9 @@ func qrCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []stri
 	}
 }
 
-func qrForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string, accId deltachat.AccountId, addr string) {
+func qrForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string, accId uint32) {
 	if isConf, _ := bot.Rpc.IsConfigured(accId); isConf {
-		qrdata, err := bot.Rpc.GetChatSecurejoinQrCode(accId, option.None[deltachat.ChatId]())
+		qrdata, err := bot.Rpc.GetChatSecurejoinQrCode(accId, nil)
 		if err != nil {
 			cli.Logger.Errorf("Failed to generate invite link: %v", err)
 			return
@@ -240,16 +232,14 @@ func qrForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string
 
 func adminCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	var err error
-	var accounts []deltachat.AccountId
-	if cli.SelectedAddr == "" { // for all accounts
+	var accounts []uint32
+	if cli.SelectedAccount == 0 { // for all accounts
 		accounts, err = bot.Rpc.GetAllAccountIds()
 		if err == nil && len(accounts) == 0 {
 			cli.Logger.Errorf("There are no accounts yet, add a new account using the init subcommand")
 		}
 	} else {
-		var accId deltachat.AccountId
-		accId, err = cli.GetAccount(bot.Rpc, cli.SelectedAddr)
-		accounts = []deltachat.AccountId{accId}
+		accounts = []uint32{cli.SelectedAccount}
 	}
 	if err != nil {
 		cli.Logger.Error(err)
@@ -257,18 +247,13 @@ func adminCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []s
 	}
 
 	for _, accId := range accounts {
-		addr, err := cli.GetAddress(bot.Rpc, accId)
-		if err != nil {
-			cli.Logger.Error(err)
-			continue
-		}
-		fmt.Printf("Account #%v (%v):\n", accId, addr)
+		fmt.Printf("Account #%v:\n", accId)
 		adminForAcc(cli, bot, cmd, args, accId)
 		fmt.Println("")
 	}
 }
 
-func adminForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string, accId deltachat.AccountId) {
+func adminForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string, accId uint32) {
 	if isConf, _ := bot.Rpc.IsConfigured(accId); !isConf {
 		cli.Logger.Error("account not configured")
 		return
@@ -281,7 +266,7 @@ func adminForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []str
 		cli.Logger.Errorf(errMsg, err)
 		return
 	}
-	var chatId deltachat.ChatId
+	var chatId uint32
 	if reset {
 		chatId, err = cli.ResetAdminChat(bot, accId)
 	} else {
@@ -292,7 +277,7 @@ func adminForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []str
 		return
 	}
 
-	qrdata, err := bot.Rpc.GetChatSecurejoinQrCode(accId, option.Some(chatId))
+	qrdata, err := bot.Rpc.GetChatSecurejoinQrCode(accId, &chatId)
 	if err != nil {
 		cli.Logger.Errorf(errMsg, err)
 		return
@@ -303,7 +288,7 @@ func adminForAcc(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []str
 }
 
 func listCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-	if cli.SelectedAddr != "" {
+	if cli.SelectedAccount != 0 {
 		cli.Logger.Errorf("operation not supported for a single account, discard the -a/--account option and try again")
 		return
 	}
@@ -314,31 +299,37 @@ func listCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []st
 		return
 	}
 	for _, accId := range accounts {
-		addr, err := cli.GetAddress(bot.Rpc, accId)
+		relays, err := bot.Rpc.ListTransports(accId)
 		if err != nil {
 			cli.Logger.Error(err)
 			continue
 		}
 
-		if isConf, _ := bot.Rpc.IsConfigured(accId); !isConf {
-			addr = addr + " (not configured)"
+		var addrs string
+		for index, relay := range relays {
+			if index == 0 {
+				addrs = relay.Addr
+			} else {
+				addrs += ", " + relay.Addr
+			}
 		}
-		fmt.Printf("#%v - %v\n", accId, addr)
+		if addrs == "" {
+			addrs = "(not configured)"
+		}
+		fmt.Printf("#%v - %v\n", accId, addrs)
 	}
 }
 
 func removeCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 	var err error
-	var accounts []deltachat.AccountId
-	if cli.SelectedAddr == "" { // for all accounts
+	var accounts []uint32
+	if cli.SelectedAccount == 0 { // for all accounts
 		accounts, err = bot.Rpc.GetAllAccountIds()
 		if err == nil && len(accounts) == 0 {
 			cli.Logger.Errorf("There are no accounts yet, add a new account using the init subcommand")
 		}
 	} else {
-		var accId deltachat.AccountId
-		accId, err = cli.GetAccount(bot.Rpc, cli.SelectedAddr)
-		accounts = []deltachat.AccountId{accId}
+		accounts = []uint32{cli.SelectedAccount}
 	}
 	if err != nil {
 		cli.Logger.Error(err)
@@ -351,15 +342,11 @@ func removeCallback(cli *BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []
 	}
 
 	for _, accId := range accounts {
-		addr, err := cli.GetAddress(bot.Rpc, accId)
-		if err != nil {
-			cli.Logger.Error(err)
-		}
 		err = bot.Rpc.RemoveAccount(accId)
 		if err != nil {
 			cli.Logger.Error(err)
 		} else {
-			cli.Logger.Infof("Account #%v (%q) removed successfully.", accId, addr)
+			cli.Logger.Infof("Account #%v removed successfully.", accId)
 		}
 	}
 }

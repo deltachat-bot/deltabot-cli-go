@@ -3,7 +3,7 @@ module github.com/deltachat-bot/deltabot-cli-go
 go 1.25
 
 require (
-	github.com/chatmail/rpc-client-go v1.2.42
+	github.com/chatmail/rpc-client-go/v2 v2.0.0-20260306010802-31d14046782c
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.2
 	go.uber.org/zap v1.26.0

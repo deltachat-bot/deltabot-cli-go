@@ -1,39 +1,36 @@
 // This example demonstrates how to create bots that have administrators.
 //
-// The bot has the /info command that can only be executed by bot administrators in the admins chat.
-// To become admin you must use the `admin` subcommand in the cli, and scan the QR that will be shown.
+// The bot has the /info command that can only be executed by bot administrators (members of the admins chat).
+// To become admin you must use the `admin` subcommand in the cli, and open the invite link that will be shown.
 package main
 
 import (
 	"fmt"
 
-	"github.com/chatmail/rpc-client-go/deltachat"
+	"github.com/chatmail/rpc-client-go/v2/deltachat"
 	"github.com/deltachat-bot/deltabot-cli-go/botcli"
 	"github.com/spf13/cobra"
 )
 
 var cli *botcli.BotCli = botcli.New("infobot")
 
-// Process messages sent to the group of administrators and allow to run privileged commands there.
-func onNewMsg(bot *deltachat.Bot, accId deltachat.AccountId, msgId deltachat.MsgId) {
+// Process messages sent by administrators.
+func onNewMsg(bot *deltachat.Bot, accId uint32, msgId uint32) {
 	msg, _ := bot.Rpc.GetMessage(accId, msgId)
 	if msg.FromId <= deltachat.ContactLastSpecial { // ignore message from self
 		return
 	}
 
-	adminChatId, _ := cli.AdminChat(bot, accId)
-	if msg.ChatId == adminChatId {
-		isAdmin, _ := cli.IsAdmin(bot, accId, msg.FromId)
-		if isAdmin {
-			switch msg.Text {
-			case "/info":
-				info, _ := bot.Rpc.GetInfo(accId)
-				var text string
-				for key, value := range info {
-					text += key + "=" + value + "\n"
-				}
-				bot.Rpc.MiscSendTextMessage(accId, msg.ChatId, text)
+	isAdmin, _ := cli.IsAdmin(bot, accId, msg.FromId)
+	if isAdmin {
+		switch msg.Text {
+		case "/info":
+			info, _ := bot.Rpc.GetInfo(accId)
+			var text string
+			for key, value := range info {
+				text += key + "=" + value + "\n"
 			}
+			bot.Rpc.SendMsg(accId, msg.ChatId, deltachat.MessageData{Text: &text})
 		}
 	}
 }
@@ -47,11 +44,10 @@ func main() {
 	}
 	cli.AddCommand(infoCmd, func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		var info map[string]string
-		if cli.SelectedAddr == "" { // no account selected with --a/--account, show system info
+		if cli.SelectedAccount == 0 { // no account selected with --a/--account, show system info
 			info, _ = bot.Rpc.GetSystemInfo()
 		} else { // account selected, show info about that account
-			accId, _ := cli.GetAccount(bot.Rpc, cli.SelectedAddr)
-			info, _ = bot.Rpc.GetInfo(accId)
+			info, _ = bot.Rpc.GetInfo(cli.SelectedAccount)
 		}
 		for key, val := range info {
 			fmt.Printf("%v=%#v\n", key, val)
