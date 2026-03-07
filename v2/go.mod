@@ -1,4 +1,4 @@
-module github.com/deltachat-bot/deltabot-cli-go
+module github.com/deltachat-bot/deltabot-cli-go/v2
 
 go 1.25
 

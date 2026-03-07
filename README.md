@@ -28,8 +28,8 @@ https://github.com/chatmail/core/tree/main/deltachat-rpc-server
 
 Example echo-bot written with deltabot-cli:
 
-<!-- MARKDOWN-AUTO-DOCS:START (CODE:src=./examples/echobot.go) -->
-<!-- The below code snippet is automatically added from ./examples/echobot.go -->
+<!-- MARKDOWN-AUTO-DOCS:START (CODE:src=./examples/echobot/echobot.go) -->
+<!-- The below code snippet is automatically added from ./examples/echobot/echobot.go -->
 ```go
 package main
 
@@ -69,14 +69,7 @@ go run ./echobot.go serve
 
 Use `go run ./echobot.go --help` to see all the available options.
 
-Check the [examples folder](https://github.com/deltachat-bot/deltabot-cli-go/tree/master/examples) for
-more examples.
+Check the [examples folder](./examples) for more examples.
 
 This package depends on https://github.com/chatmail/rpc-client-go library, check its
 documentation to better understand how to use the Delta Chat API.
-
-## Template project
-
-To help you quickly creating new bots, we have prepared a project template with all the basic
-boilerplate, including unit tests, linter and GitHub CI to test and release your bot. Check it here:
-https://github.com/deltachat-bot/echobot-go

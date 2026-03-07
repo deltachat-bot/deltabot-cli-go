@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/chatmail/rpc-client-go/v2/deltachat"
-	"github.com/deltachat-bot/deltabot-cli-go/botcli"
+	"github.com/deltachat-bot/deltabot-cli-go/v2/botcli"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ func onNewMsg(bot *deltachat.Bot, accId uint32, msgId uint32) {
 			for key, value := range info {
 				text += key + "=" + value + "\n"
 			}
-			bot.Rpc.SendMsg(accId, msg.ChatId, deltachat.MessageData{Text: &text})
+			_, _ = bot.Rpc.SendMsg(accId, msg.ChatId, deltachat.MessageData{Text: &text})
 		}
 	}
 }
@@ -57,5 +57,5 @@ func main() {
 	cli.OnBotInit(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		bot.OnNewMsg(onNewMsg)
 	})
-	cli.Start()
+	_ = cli.Start()
 }
