@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- breaking: switch to `github.com/chatmail/rpc-client-go/v2`
+
 ## v1.2.14
 
 ## Changed
