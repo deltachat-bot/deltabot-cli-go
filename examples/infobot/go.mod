@@ -3,7 +3,7 @@ module executable
 go 1.25.1
 
 require (
-	github.com/chatmail/rpc-client-go/v2 v2.0.0-20260306210653-a6a6b0ec123f
+	github.com/chatmail/rpc-client-go/v2 v2.0.1
 	github.com/deltachat-bot/deltabot-cli-go/v2 v2.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.10.2
 )

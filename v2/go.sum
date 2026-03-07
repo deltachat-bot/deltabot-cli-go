@@ -1,5 +1,5 @@
-github.com/chatmail/rpc-client-go/v2 v2.0.0-20260306010802-31d14046782c h1:bQWMB4RKCMb1iAMiEbvDIt0tLJPgz2wJQbPXk4lxF6c=
-github.com/chatmail/rpc-client-go/v2 v2.0.0-20260306010802-31d14046782c/go.mod h1:kvYyHTHjjtWHRIp8H9JnbPFhmBHr1YUqB3IrOZhoG3s=
+github.com/chatmail/rpc-client-go/v2 v2.0.1 h1:IVTE3kkDypwAl5xP/vi+6qH+u9kZZDuN/fY9oNrfAbU=
+github.com/chatmail/rpc-client-go/v2 v2.0.1/go.mod h1:kvYyHTHjjtWHRIp8H9JnbPFhmBHr1YUqB3IrOZhoG3s=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/creachadair/jrpc2 v1.1.2 h1:UOYMipEFYlwd5qmcvs9GZBurn3oXt1UDIX5JLjWWFzo=
 github.com/creachadair/jrpc2 v1.1.2/go.mod h1:JcCe2Eny3lIvVwZLm92WXyU+tNUgTBWFCLMsfNkjEGk=
