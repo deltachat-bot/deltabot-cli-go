@@ -15,7 +15,7 @@ creating the bot CLI.
 ## Install
 
 ```sh
-go get -u github.com/deltachat-bot/deltabot-cli-go
+go get -u github.com/deltachat-bot/deltabot-cli-go/v2
 ```
 
 ### Installing deltachat-rpc-server
