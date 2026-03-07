@@ -1,4 +1,5 @@
 #!/bin/env bash
+set -euo pipefail
 
 PKG='github.com/deltachat-bot/deltabot-cli-go'
 
@@ -18,12 +19,7 @@ then
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0
 fi
 
-cd v2
-if ! golangci-lint run
-then
-    exit 1
-fi
-cd ..
+cd v2 && golangci-lint run && cd ..
 
 if ! command -v deltachat-rpc-server &> /dev/null
 then
@@ -33,12 +29,6 @@ then
     export PATH=`pwd`:"$PATH"
 fi
 
-if ! command -v courtney &> /dev/null
-then
-    echo "courtney not found, installing..."
-    go install github.com/dave/courtney@master
-fi
-
 # test examples
 for i in examples/*
 do
@@ -46,24 +36,15 @@ do
     cd "$i"
     go mod edit -replace=$PKG/v2=../../v2
     go mod tidy
-    if ! golangci-lint run
-    then
-        exit 1
-    fi
-    if ! go build -v
-    then
-        exit 1
-    fi
-    if ! go test -v
-    then
-        exit 1
-    fi
+    golangci-lint run
+    go build -v
+    go test -v
     go mod edit -dropreplace $PKG/v2
     cd ../..
 done
 echo "Done testing examples"
 
 cd v2
-# add -t="-parallel=1" to avoid running tests in parallel
-courtney -v -t="./..." -o coverage.out
+# add -parallel=1 to avoid running tests in parallel
+go test -v ./... -coverprofile coverage.out
 go tool cover -func=coverage.out -o=../coverage-percent.out
