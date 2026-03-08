@@ -3,12 +3,20 @@ name: CI
 on:
   push:
     branches: [ "master", "main" ]
+    paths:
+      - "examples/**"
+      - "scripts/**"
+      - "v2/**"
   pull_request:
     branches: [ "master", "main" ]
+    paths:
+      - "examples/**"
+      - "scripts/**"
+      - "v2/**"
 
 jobs:
 
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -23,7 +31,6 @@ jobs:
       - name: Test
         run: |
           export TEST_DEBUG=1
-          export TEST_EXTRA_TAGS=" "
           bash ./scripts/run_tests.sh
 
       - name: Coverage Badge - Generate
@@ -58,12 +65,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.head_ref }}
-
-    services:
-      mail_server:
-        image: ghcr.io/deltachat/mail-server-tester:release
-        ports:
-          - 3025:25
-          - 3143:143
-          - 3465:465
-          - 3993:993

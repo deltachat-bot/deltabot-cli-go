@@ -5,8 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/chatmail/rpc-client-go/deltachat"
-	"github.com/chatmail/rpc-client-go/deltachat/transport"
+	"github.com/chatmail/rpc-client-go/v2/deltachat"
 )
 
 var acfactory *deltachat.AcFactory
@@ -20,8 +19,8 @@ func TestMain(m *testing.M) {
 
 func RunConfiguredCli(cli *BotCli, args ...string) (output string, err error) {
 	var dir string
-	acfactory.WithOnlineBot(func(bot *deltachat.Bot, accId deltachat.AccountId) {
-		dir = filepath.Dir(bot.Rpc.Transport.(*transport.IOTransport).AccountsDir)
+	acfactory.WithOnlineBot(func(bot *deltachat.Bot, accId uint32) {
+		dir = filepath.Dir(bot.Rpc.Transport.(*deltachat.IOTransport).AccountsDir)
 	})
 	args = append([]string{"-f=" + dir}, args...)
 	return runCli(cli, args...)
