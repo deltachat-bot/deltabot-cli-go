@@ -111,7 +111,7 @@ func (botcli *BotCli) GetLogger(accId uint32) *zap.SugaredLogger {
 // Add a subcommand to the CLI. The given callback will be executed when the command is used.
 func (botcli *BotCli) AddCommand(cmd *cobra.Command, callback Callback) {
 	if cmd.Run != nil {
-		panic("Can not set cmd.Run property, it would be overriden")
+		panic("Can not set cmd.Run property, it would be overridden")
 	}
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		botcli.parsedCmd = &_ParsedCmd{cmd, args}
