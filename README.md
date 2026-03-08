@@ -3,7 +3,7 @@
 ![Latest release](https://img.shields.io/github/v/tag/deltachat-bot/deltabot-cli-go?label=release)
 [![Go Reference](https://pkg.go.dev/badge/github.com/deltachat-bot/deltabot-cli-go.svg)](https://pkg.go.dev/github.com/deltachat-bot/deltabot-cli-go)
 [![CI](https://github.com/deltachat-bot/deltabot-cli-go/actions/workflows/ci.yml/badge.svg)](https://github.com/deltachat-bot/deltabot-cli-go/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/badge/Coverage-61.3%25-yellow)
+![Coverage](https://img.shields.io/badge/Coverage-47.0%25-yellow)
 [![Go Report Card](https://goreportcard.com/badge/github.com/deltachat-bot/deltabot-cli-go)](https://goreportcard.com/report/github.com/deltachat-bot/deltabot-cli-go)
 
 Library to speedup Delta Chat bot development in Golang.
@@ -34,27 +34,28 @@ Example echo-bot written with deltabot-cli:
 package main
 
 import (
-	"github.com/chatmail/rpc-client-go/deltachat"
-	"github.com/deltachat-bot/deltabot-cli-go/botcli"
+	"github.com/chatmail/rpc-client-go/v2/deltachat"
+	"github.com/deltachat-bot/deltabot-cli-go/v2/botcli"
 	"github.com/spf13/cobra"
 )
 
 func main() {
 	cli := botcli.New("echobot")
 
-	// incoming message handling
 	cli.OnBotInit(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		bot.OnNewMsg(func(bot *deltachat.Bot, accId deltachat.AccountId, msgId deltachat.MsgId) {
+		// incoming message handling
+		bot.OnNewMsg(func(bot *deltachat.Bot, accId uint32, msgId uint32) {
 			msg, _ := bot.Rpc.GetMessage(accId, msgId)
 			if msg.FromId > deltachat.ContactLastSpecial && msg.Text != "" {
-				bot.Rpc.MiscSendTextMessage(accId, msg.ChatId, msg.Text)
+				_, _ = bot.Rpc.SendMsg(accId, msg.ChatId, deltachat.MessageData{Text: &msg.Text})
 			}
 		})
 	})
 	cli.OnBotStart(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		cli.Logger.Info("OnBotStart event triggered: bot is about to start!")
 	})
-	cli.Start()
+
+	_ = cli.Start()
 }
 ```
 <!-- MARKDOWN-AUTO-DOCS:END -->
