@@ -24,6 +24,9 @@ This package depends on a standalone Delta Chat RPC server `deltachat-rpc-server
 available in your `PATH`. For installation instructions check:
 https://github.com/chatmail/core/tree/main/deltachat-rpc-server
 
+**WARNING:** Install the version of deltachat-rpc-server that matches the version of this package,
+different versions might be incompatible and cause your bot to crash.
+
 ## Usage
 
 Example echo-bot written with deltabot-cli:
@@ -64,7 +67,7 @@ Save the previous code snippet as `echobot.go` then run:
 
 ```sh
 go mod init echobot; go mod tidy
-go run ./echobot.go init bot@example.com PASSWORD
+go run ./echobot.go init dcaccount:nine.testrun.org
 go run ./echobot.go serve
 ```
 
